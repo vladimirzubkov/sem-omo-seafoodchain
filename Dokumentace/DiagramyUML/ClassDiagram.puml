@@ -1,0 +1,156 @@
+@startuml ClassDiagram
+skinparam class {
+    BackgroundColor White
+    ArrowColor #2688d6
+    BorderColor #2688d6
+}
+
+package "entity" {
+    abstract class AbstractParty {
+        +id: String
+        +name: String
+        +balance: double
+        +channels: Set<Channel>
+        +handleEvent(event: Event)
+        +accept(visitor: ChainVisitor)
+    }
+    
+    AbstractParty <|-- Fisher
+    AbstractParty <|-- Processor
+    AbstractParty <|-- Warehouse
+    AbstractParty <|-- Kitchen
+    AbstractParty <|-- Distributor
+    AbstractParty <|-- Seller
+    AbstractParty <|-- Customer
+    
+    class SCMDirector {
+        +optimizeSupplyChain()
+        +accept(visitor: ChainVisitor) : void
+    }
+    class Inspector {
+        +inspectByWearLevel()
+        +accept(visitor: ChainVisitor) : void
+    }
+    
+    SCMDirector -up-|> AbstractParty
+    Inspector -up-|> AbstractParty
+}
+
+package "device" {
+    abstract class Device {
+        +wearLevel: double
+        +isOperational: boolean
+        +energyConsumption: double
+        +updateWear()
+        +breakDown()
+    }
+    Device <|-- Machine
+    Device <|-- Robot
+}
+
+package "employee" {
+    abstract class Employee {
+        +salaryPerTick: double
+        +isAvailable: boolean
+    }
+    Employee <|-- Cook
+    Employee <|-- Repairer
+}
+
+package "item" {
+    abstract class Item {
+        +id: String
+        +originCertificate: String
+        +currentState: SeafoodState
+        +quality: double
+        +temperatureHistory: List<TemperatureRecord>
+    }
+    Item <|-- Seafood
+    Item <|-- Material
+    Item <|-- Product
+}
+
+package "blockchain" {
+    class Transaction {
+        +from: AbstractParty
+        +to: AbstractParty
+        +item: Item
+        +price: double
+        +timestamp: long
+        +hash: String
+        +previousHash: String
+        +signature: String
+    }
+    
+    class Channel {
+        +name: String
+        +participants: Set<AbstractParty>
+        +transactions: List<Transaction>
+    }
+    
+    class Blockchain {
+        +channels: Map<String, Channel>
+        +validateChain()
+        +detectDoubleSpending(itemId: String)
+    }
+}
+
+package "simulation" {
+    class Simulator {
+        +currentTick: long
+        +entities: List<AbstractParty>
+        +devices: List<Device>
+        +runTick()
+    }
+    
+    class ProductionLine {
+        +name: String
+        +sequence: List<AbstractParty>
+        +reorderDynamically()
+    }
+}
+
+package "event" {
+    class EventBus {
+        +publish(event: Event)
+        +subscribe(type: EventType, observer: Observer)
+    }
+    EventBus --> "many" AbstractParty : notifies >
+}
+
+package "patterns.state" {
+    interface SeafoodState {
+        +handleTick(item: Item)
+        +canTransitionTo(next: SeafoodState)
+    }
+    SeafoodState <|-- RawState
+    SeafoodState <|-- ProcessedState
+    SeafoodState <|-- FrozenState
+    SeafoodState <|-- CookedState
+    SeafoodState <|-- SoldState
+}
+
+' Связи
+AbstractParty "1" -- "*" Item : handles/owns
+Device "1" -- "1" ProductionLine : belongs to
+Employee "1" -- "1" AbstractParty : works at
+AbstractParty --> EventBus : subscribes to
+Item --> SeafoodState : has current
+Transaction --> Item : references
+Blockchain --> "*" Channel
+Channel --> "*" Transaction
+
+note right of EventBus
+  Observer pattern
+end note
+
+note right of SeafoodState
+  State pattern
+end note
+
+note right of SCMDirector
+  Visitor pattern
+  (will visit all entities)
+end note
+
+@enduml
