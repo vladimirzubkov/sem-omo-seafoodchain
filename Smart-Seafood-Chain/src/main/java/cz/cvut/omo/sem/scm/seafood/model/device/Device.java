@@ -1,11 +1,17 @@
 package cz.cvut.omo.sem.scm.seafood.model.device;
 
+import cz.cvut.omo.sem.scm.seafood.event.Event;
+import cz.cvut.omo.sem.scm.seafood.event.EventBus;
 import cz.cvut.omo.sem.scm.seafood.model.SimulationEntity;
 import cz.cvut.omo.sem.scm.seafood.model.device.sensor.IoTSensor;
+import cz.cvut.omo.sem.scm.seafood.pattern.builder.EventBuilder;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.device.ActiveState;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.device.DeviceState;
+import cz.cvut.omo.sem.scm.seafood.pattern.visitor.EntityVisitor;
+import cz.cvut.omo.sem.scm.seafood.pattern.visitor.Visitable;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.device.SensorType;
+import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
 import cz.cvut.omo.sem.scm.seafood.type.resource.ResourceType;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,19 +23,24 @@ import java.util.List;
 @Getter
 @Setter
 @ToString(callSuper = true)
-public abstract class Device extends SimulationEntity {
-    private double wearLevel = 0.0;
-    private boolean isOperational = true;
-    private ResourceType primaryResourceType; // e.g. ELECTRICITY or DIESEL
+public abstract class Device extends SimulationEntity implements Visitable {
+
+    private double wearLevel = 0.0; // 0.0 to 1.0 (100%)
+
+    // REDUNDANCY REMOVED: 'isOperational' is now determined by the State object.
+
+    private ResourceType primaryResourceType;
     private double consumptionPerHour;
     private Money maintenanceCost;
 
-    private DeviceState state = new ActiveState(); // default
+    // EVENT BUS: Needed to report breakdowns/repairs
+    private EventBus eventBus;
+
+    private DeviceState state = new ActiveState(); // Initial state
 
     // COMPOSITION: Device has IoT Sensors
     private List<IoTSensor> sensors = new ArrayList<>();
 
-    // Manual constructor to satisfy SimulationEntity's requirements
     public Device(String id, String name, ResourceType resType, double consumption, Money cost) {
         super(id, name);
         this.primaryResourceType = resType;
@@ -37,42 +48,73 @@ public abstract class Device extends SimulationEntity {
         this.maintenanceCost = cost;
     }
 
-    // Helper to attach sensor dynamically
+    // --- VISITOR PATTERN ---
+    @Override
+    public void accept(EntityVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    // --- STATE PATTERN DELEGATION ---
+
+    @Override
+    public void handleTick() {
+        // Delegate logic to the current state (Active, Broken, Repairing)
+        state.onTick(this);
+    }
+
+    /**
+     * Helper to check status without exposing the State object directly.
+     */
+    public boolean isOperational() {
+        return state.isOperational();
+    }
+
+    // --- SENSOR LOGIC ---
+
     public void attachSensor(SensorType type) {
         String sensorId = "%s-sensor-%s".formatted(this.getId(), type.name());
         this.sensors.add(new IoTSensor(sensorId, type));
     }
 
-    @Override
-    public void handleTick() {
-        if (isOperational) {
-            // 1. Increase wear logic (FRQ14)
-            // wearLevel += 0.05;
-
-            // 2. Update sensors (FRQ7)
-            updateSensors();
-        }
-    }
-
-    private void updateSensors() {
+    /**
+     * Called by the State (e.g., inside ActiveState.onTick).
+     */
+    public void updateSensors() {
         for (IoTSensor sensor : sensors) {
-            // Ask subclasses for the "normal" value (Template Method)
+            // Template Method: Get base value from subclass
             double baseValue = getBaseValueForSensor(sensor.getType());
 
             // 1. Measure new value (simulation physics)
             sensor.measure(baseValue);
 
-            // 2. Check for anomalies (Strategy hook)
+            // 2. Check for anomalies
             checkAnomaly(sensor, baseValue);
         }
     }
 
     protected void checkAnomaly(IoTSensor sensor, double targetValue) {
-        // TODO: Implement hysteresis or threshold check here.
+        // TODO: Inject SensorValidationStrategy here (Hysteresis check)
+        // For now, simple logic:
+        double diff = Math.abs(sensor.getCurrentValue() - targetValue);
+        if (diff > 5.0 && !sensor.isAlertActive()) {
+            sensor.setAlertActive(true);
+            fireEvent(EventType.DEVICE_BREAKDOWN, "Sensor anomaly detected: " + sensor.getType());
+        }
     }
 
-    // Do not use default value, as it varies for different devices (temperature for oven and fridge, vibration)
-    // also, Fail Fast if not defined in some device
-    protected abstract double getBaseValueForSensor(SensorType type);
+    // --- HELPER FOR EVENTS ---
 
+    public void fireEvent(EventType type, String description) {
+        if (eventBus != null) {
+            Event event = new EventBuilder()
+                    .type(type)
+                    .sourceId(this.getId())
+                    .description(description)
+                    .build();
+            eventBus.publish(event);
+        }
+    }
+
+    // Abstract method to be implemented by concrete devices (Oven, Fridge, Truck)
+    protected abstract double getBaseValueForSensor(SensorType type);
 }

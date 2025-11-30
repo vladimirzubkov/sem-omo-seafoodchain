@@ -1,16 +1,19 @@
 package cz.cvut.omo.sem.scm.seafood.model.device.vehicle;
 
 import cz.cvut.omo.sem.scm.seafood.model.device.Device;
-import cz.cvut.omo.sem.scm.seafood.model.device.vehicle.component.EnergySource;
+import cz.cvut.omo.sem.scm.seafood.model.device.vehicle.component.EnergySource; // Убедись, что импорт правильный (Strategy)
+import cz.cvut.omo.sem.scm.seafood.pattern.state.device.ActiveState;
+import cz.cvut.omo.sem.scm.seafood.pattern.state.device.BrokenState;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.device.SensorType;
+import cz.cvut.omo.sem.scm.seafood.type.operation.EventType; // Для событий
 import cz.cvut.omo.sem.scm.seafood.type.operation.LockState;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * Abstract base class for all transportation assets (Trucks, Vans, Bikes).
- * Extends Device as vehicles consume resources, suffer wear, and require maintenance.
+ * Integrates Energy Strategy with Device State Pattern.
  */
 @Getter
 @Setter
@@ -23,49 +26,50 @@ public abstract class Vehicle extends Device {
     // COMPOSITION: The strategy for powering the vehicle
     private EnergySource powerUnit;
 
-    /**
-     * Constructor for Transportation Assets.
-     *
-     * @param powerUnit Strategy object handling fuel/energy logic.
-     * @param baseConsumption Consumption rate passed to the Device base class.
-     */
     public Vehicle(String id, String name, EnergySource powerUnit, double baseConsumption, Money cost, double speed, double capacity) {
-        // Pass the resource type from the PowerUnit up to the Device base class
         super(id, name, powerUnit.getResourceType(), baseConsumption, cost);
 
         this.powerUnit = powerUnit;
         this.maxSpeedKmH = speed;
         this.cargoCapacityKg = capacity;
 
-        // All vehicles must have GPS and an Electronic Lock for security/tracking (FRQ7)
+        // Security sensors
         this.attachSensor(SensorType.GPS);
         this.attachSensor(SensorType.ELECTRONIC_LOCK);
     }
 
-    /**
-     * Provides the current lock status signal value (1.0, 0.0, or -1.0) to the sensor.
-     */
     protected double getLockStatus() {
         return currentLockState.getSignalValue();
     }
 
     /**
-     * Override handleTick to include fuel consumption check.
+     * Override handleTick to inject Fuel/Energy logic BEFORE standard Device behavior.
      */
     @Override
     public void handleTick() {
+        // 1. Check if the vehicle is currently in a state that consumes energy (Active)
+        // We use the helper method from Device which delegates to the State
         if (isOperational()) {
-            // Try to consume fuel for this hour
-            // We use 'getEnergyConsumptionPerHour()' from the Device parent
+
+            // 2. Try to consume fuel (Strategy Pattern)
             boolean hasFuel = powerUnit.consume(this.getConsumptionPerHour());
 
             if (!hasFuel) {
                 System.out.println("Vehicle " + getName() + " ran out of " + powerUnit.getResourceType());
-                this.setOperational(false); // Stop the vehicle
-                // Ideally trigger an EVENT here
-            } else {
-                super.handleTick(); // Proceed with standard device ticking (wear, sensors)
+
+                // 3. State Transition: Instead of setOperational(false), we set the State explicitly
+                this.setState(new BrokenState());
+
+                // 4. Fire Event
+                this.fireEvent(EventType.DEVICE_BREAKDOWN,
+                        "Vehicle stalled: Out of " + powerUnit.getResourceType());
+
+                return; // Stop execution here, do not proceed to super.handleTick() (no wear added this tick)
             }
         }
+
+        // 5. If we have fuel (or if we are already broken/repairing),
+        // delegate to the Device's state logic (wear calculation, repair timer, etc.)
+        super.handleTick();
     }
 }
