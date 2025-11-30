@@ -21,13 +21,14 @@ import java.util.List;
 public abstract class Item {
 
     private String itemId;
+    private String name; // Common name field for all item types (supports polymorphism)
+
     private LocalDateTime catchTime;
     private SeaRegion originRegion;
 
     private StorageTemperature requiredStorage = StorageTemperature.CHILLED; // default
 
     // Traceability – required for Inspector and reports (FRQ4)
-    // Stores history of temperature checks with timestamps
     private List<TemperatureRecord> temperatureHistory = new ArrayList<>();
 
     private double currentTemperature = 0.0; // Current state
@@ -64,32 +65,20 @@ public abstract class Item {
      */
     public String getOriginCertificate(Blockchain blockchain) {
         return blockchain.findFirstTransaction(this.itemId)
-                .map(tx -> tx.getHash()) // Lambda not strictly needed here if method reference works, but safe
+                .map(tx -> (String) Transaction.getHash(tx)) // Assuming Transaction has getHash
                 .orElse("UNCERTIFIED");
     }
 
     // --- COMPOSITE PATTERN METHODS ---
 
-    /**
-     * Returns true if this item can contain other items.
-     * Leaf nodes (Seafood, Material) return false.
-     */
     public boolean isContainer() {
         return false;
     }
 
-    /**
-     * Returns the contents if this is a container.
-     */
     public List<Item> getContents() {
         return Collections.emptyList();
     }
 
-    /**
-     * Calculates total weight.
-     * For leaf items, returns their own weight.
-     * For containers, should return sum of contents + tare weight.
-     */
     public double getTotalWeight() {
         return this.weightKg;
     }
