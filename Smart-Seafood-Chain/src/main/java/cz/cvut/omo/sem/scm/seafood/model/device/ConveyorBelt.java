@@ -10,11 +10,11 @@ import lombok.Setter;
 @Setter
 public class ConveyorBelt extends Device {
 
-    private double speedMetersPerSec;
+    private int maxItemsPerHour;
 
-    public ConveyorBelt(String id, double energy, Money cost, double speed) {
+    public ConveyorBelt(String id, double energy, Money cost, int maxItemsPerHour) {
         super(id, "Conveyor Belt", ResourceType.ELECTRICITY, energy, cost);
-        this.speedMetersPerSec = speed;
+        this.maxItemsPerHour = maxItemsPerHour;
 
         // Conveyors need Vibration sensors to detect motor issues
         this.attachSensor(SensorType.VIBRATION);
