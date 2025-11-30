@@ -98,7 +98,7 @@ public abstract class Device extends SimulationEntity implements Visitable {
         double diff = Math.abs(sensor.getCurrentValue() - targetValue);
         if (diff > 5.0 && !sensor.isAlertActive()) {
             sensor.setAlertActive(true);
-            fireEvent(EventType.DEVICE_BREAKDOWN, "Sensor anomaly detected: " + sensor.getType());
+            fireEvent(EventType.DEVICE_BREAKDOWN, "Sensor anomaly detected: %s".formatted(sensor.getType()));
         }
     }
 

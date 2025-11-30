@@ -23,6 +23,6 @@ public class SecurityReport extends ReportTemplate {
         }
 
         // TODO: List details of each violation
-        return "WARNING: Detected " + violations + " security incidents!\n";
+        return "WARNING: Detected %d security incidents!\n".formatted(violations);
     }
 }

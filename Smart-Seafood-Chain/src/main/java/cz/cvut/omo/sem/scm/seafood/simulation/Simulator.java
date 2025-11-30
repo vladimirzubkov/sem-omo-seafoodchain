@@ -43,7 +43,7 @@ public class Simulator {
 
     private void tick() {
         currentTick++;
-        System.out.println("--- Tick " + currentTick + " ---");
+        System.out.println("--- Tick %d ---".formatted(currentTick));
 
         // Fixes: God Class antipattern.
         // Instead of calling updateDevices(), handleRepairs(), etc.

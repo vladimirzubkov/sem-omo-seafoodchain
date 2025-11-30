@@ -46,7 +46,7 @@ public class CookingProcess<T extends Item> {
             historyLog.add("TRANSFORM: " + stepName);
             return new CookingProcess<>(newItem, false, historyLog, requiredCapabilities);
         } catch (Exception e) {
-            return fail("Exception during " + stepName + ": " + e.getMessage());
+            return fail("Exception during %s: %s".formatted(stepName, e.getMessage()));
         }
     }
 
@@ -59,7 +59,7 @@ public class CookingProcess<T extends Item> {
             historyLog.add("ACTION: " + capability.name());
             return new CookingProcess<>(processedItem, false, historyLog, requiredCapabilities);
         } catch (Exception e) {
-            return fail("Processing failed at " + capability);
+            return fail("Processing failed at %s".formatted(capability));
         }
     }
 
@@ -67,9 +67,9 @@ public class CookingProcess<T extends Item> {
     public CookingProcess<T> ensure(Predicate<T> validator, String errorMessage) {
         if (isRuined) return this;
         if (!validator.test(item)) {
-            return fail("QC FAILED: " + errorMessage);
+            return fail("QC FAILED: %s".formatted(errorMessage));
         }
-        historyLog.add("QC PASSED: " + errorMessage);
+        historyLog.add("QC PASSED: %s".formatted(errorMessage));
         return this;
     }
 
@@ -98,12 +98,12 @@ public class CookingProcess<T extends Item> {
             box.addItem(currentItem);
             box.setCurrentTemperature(currentItem.getCurrentTemperature());
             return box;
-        }, "Packaging into " + boxType);
+        }, "Packaging into %s".formatted(boxType));
     }
 
     private <R extends Item> CookingProcess<R> fail(String reason) {
         List<String> newLog = new ArrayList<>(historyLog);
-        newLog.add("FAILURE: " + reason);
+        newLog.add("FAILURE: %s".formatted(reason));
         return new CookingProcess<>(null, true, newLog, requiredCapabilities);
     }
 

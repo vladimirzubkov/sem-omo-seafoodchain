@@ -43,6 +43,6 @@ public class CombustionEngine implements EnergySource {
 
     @Override
     public String getDescription() {
-        return "Combustion Engine (" + fuelType + ")";
+        return "Combustion Engine (%s)".formatted(fuelType);
     }
 }

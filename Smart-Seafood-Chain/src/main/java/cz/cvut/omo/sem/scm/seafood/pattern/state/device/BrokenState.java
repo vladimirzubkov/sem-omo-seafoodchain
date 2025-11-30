@@ -22,7 +22,7 @@ public class BrokenState implements DeviceState {
 
     @Override
     public void onRepair(Device context) {
-        System.out.println("Technician started repairing " + context.getName());
+        System.out.println("Technician started repairing %s".formatted(context.getName()));
         context.setState(new RepairingState());
     }
 

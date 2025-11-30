@@ -55,14 +55,14 @@ public abstract class Vehicle extends Device {
             boolean hasFuel = powerUnit.consume(this.getConsumptionPerHour());
 
             if (!hasFuel) {
-                System.out.println("Vehicle " + getName() + " ran out of " + powerUnit.getResourceType());
+                System.out.println("Vehicle %s ran out of %s".formatted(getName(), powerUnit.getResourceType()));
 
                 // 3. State Transition: Instead of setOperational(false), we set the State explicitly
                 this.setState(new BrokenState());
 
                 // 4. Fire Event
                 this.fireEvent(EventType.DEVICE_BREAKDOWN,
-                        "Vehicle stalled: Out of " + powerUnit.getResourceType());
+                        "Vehicle stalled: Out of %s".formatted(powerUnit.getResourceType()));
 
                 return; // Stop execution here, do not proceed to super.handleTick() (no wear added this tick)
             }

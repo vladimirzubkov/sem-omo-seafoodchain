@@ -35,7 +35,7 @@ public class SCMAppStarter {
 
         } catch (Exception e) {
             System.err.println("CRITICAL ERROR: Could not start simulation.");
-            System.err.println("Reason: " + e.getMessage());
+            System.err.println("Reason: %s".formatted(e.getMessage()));
             e.printStackTrace();
         }
     }

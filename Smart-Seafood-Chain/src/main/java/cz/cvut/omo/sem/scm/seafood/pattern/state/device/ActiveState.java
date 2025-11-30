@@ -26,7 +26,7 @@ public class ActiveState implements DeviceState {
 
     @Override
     public void onFailure(Device context) {
-        System.out.println("DEVICE FAILED: " + context.getName());
+        System.out.println("DEVICE FAILED: %s".formatted(context.getName()));
         // Switch to Broken State
         context.setState(new BrokenState());
 

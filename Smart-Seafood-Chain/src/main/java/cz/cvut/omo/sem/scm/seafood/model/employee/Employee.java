@@ -74,9 +74,9 @@ public class Employee extends SimulationEntity implements EventListener {
 
         // 3. Handle Shift Transitions (Fire SHIFT_STARTED / SHIFT_ENDED events)
         if (currentlyOnShift && !wasOnShiftLastTick) {
-            reportAction(EventType.SHIFT_STARTED, "Started shift at " + Time.getCurrentHour(), null);
+            reportAction(EventType.SHIFT_STARTED, "Started shift at %d".formatted(Time.getCurrentHour()), null);
         } else if (!currentlyOnShift && wasOnShiftLastTick) {
-            reportAction(EventType.SHIFT_ENDED, "Ended shift at " + Time.getCurrentHour(), null);
+            reportAction(EventType.SHIFT_ENDED, "Ended shift at %d".formatted(Time.getCurrentHour()), null);
         }
         wasOnShiftLastTick = currentlyOnShift;
 

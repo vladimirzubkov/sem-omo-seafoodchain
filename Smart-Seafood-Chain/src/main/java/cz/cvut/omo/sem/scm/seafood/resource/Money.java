@@ -28,6 +28,6 @@ public class Money {
 
     @Override
     public String toString() {
-        return amount + " " + currency.getSymbol();
+        return "%s %s".formatted(amount, currency.getSymbol());
     }
 }

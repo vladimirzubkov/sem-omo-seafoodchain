@@ -13,7 +13,7 @@ public class RepairingState implements DeviceState {
     public void onTick(Device context) {
         repairTicksRemaining--;
         if (repairTicksRemaining <= 0) {
-            System.out.println("Repair finished for " + context.getName());
+            System.out.println("Repair finished for %s".formatted(context.getName()));
             context.setWearLevel(0.0); // Reset wear
             context.setState(new ActiveState()); // Back to work
         }

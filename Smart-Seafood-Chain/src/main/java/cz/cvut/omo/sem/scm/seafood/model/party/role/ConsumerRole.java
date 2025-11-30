@@ -46,7 +46,7 @@ public class ConsumerRole implements BusinessRole {
         // Remove item from world/inventory
         context.getInventory().remove(item);
 
-        System.out.println("[CONSUMER] " + context.getName() + " consumed item: " + item.getItemId());
+        System.out.println("[CONSUMER] %s consumed item: %s".formatted(context.getName(), item.getItemId()));
 
         // TODO: Logic for satisfaction (e.g., if fish was fresh -> increase happiness)
     }
