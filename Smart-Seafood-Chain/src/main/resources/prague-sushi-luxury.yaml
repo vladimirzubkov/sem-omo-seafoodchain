@@ -1,0 +1,95 @@
+# src/main/resources/prague-sushi-luxury.yaml
+simulation:
+  maxTicks: 72
+
+company:
+  name: "Prague Sushi Luxury s.r.o."
+  description: "High-end sushi restaurant chain in Prague"
+
+seaRegions:
+  - name: "Imported Pacific"
+    seasonMultiplier: 1.0
+    fishTypes: ["Tuna", "Yellowtail", "Salmon", "Shrimp", "Octopus"]
+
+parties:
+  - type: Importer
+    id: importer-tuna
+    name: "Pacific Tuna Import"
+    balance: "1500000 CZK"
+
+  - type: Processor
+    id: proc-prague-lux
+    name: "Luxury Fish Prep Prague"
+    balance: "800000 CZK"
+
+  - type: Kitchen
+    id: kitchen-downtown
+    name: "Downtown Sushi Kitchen"
+    balance: "600000 CZK"
+
+  - type: Kitchen
+    id: kitchen-downtown
+    name: "Downtown Sushi Kitchen"
+    balance: "600000 CZK"
+    acceptsDineIn: true
+    supportsDelivery: true
+    suppliesSupermarkets: false
+
+  - type: Kitchen
+    id: rest-vip1
+    name: "Sushi Imperial Prague"
+    balance: "1200000 CZK"
+    acceptsDineIn: false
+    supportsDelivery: true
+    suppliesSupermarkets: true
+
+  - type: Kitchen
+    id: rest-vip2
+    name: "Sushi River Prague"
+    balance: "1000000 CZK"
+    acceptsDineIn: true
+    supportsDelivery: false
+    suppliesSupermarkets: false
+
+  - type: Customer
+    id: cust-lux1
+    name: "Luxury Client Petr"
+    balance: "100000 CZK"
+
+  - type: Cook
+    id: master-chef
+    name: "Sushi Master Hiroshi"
+
+  - type: RepairTechnician
+    id: tech-prague
+    name: "Tech Milan"
+
+  - type: SCMManager
+    id: scm-prague
+    name: "SCM Prague Director"
+
+  - type: Inspector
+    id: inspector-lux
+    name: "Lux Inspector Klara"
+
+devices:
+  - type: SuperFreezer
+    id: super-freeze
+    energyPerHour: 8.0
+    maintenanceCost: "15000 CZK"
+
+  - type: PrecisionRobot
+    id: prec-robot
+    energyPerHour: 5.5
+    maintenanceCost: "20000 CZK"
+
+productionLines:
+  - name: "Nigiri & Sashimi Line"
+    devices: ["prec-robot", "super-freeze"]
+    cooks: ["master-chef"]
+    technicians: ["tech-prague"]
+
+  - name: "Maki Roll Line"
+    devices: ["prec-robot"]
+    cooks: ["master-chef"]
+    technicians: ["tech-prague"]

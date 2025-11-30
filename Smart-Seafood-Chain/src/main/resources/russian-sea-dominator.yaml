@@ -1,0 +1,149 @@
+simulation:
+  maxTicks: 720  # full month of non-stop operation
+
+company:
+  name: "Russian Sea Dominator JSC"
+  description: "Largest seafood empire from Murmansk to Prague. Total domination."
+
+seaRegions:
+  - name: "Barents Sea"
+    seasonMultiplier: 1.9
+    fishTypes: ["Cod", "Haddock", "Salmon", "Herring", "King Crab"]
+
+  - name: "White Sea"
+    seasonMultiplier: 1.6
+    fishTypes: ["Herring", "Navaga", "Flounder", "Salmon"]
+
+  - name: "Kara Sea"
+    seasonMultiplier: 2.2
+    fishTypes: ["Polar Cod", "Arctic Char", "King Crab"]
+
+parties:
+  - type: Fisher
+    id: fisher-murmansk1
+    name: "Trawler Sever-1"
+    balance: "180000000 RUB"
+    fishingZone: "Barents Sea"
+
+  - type: Fisher
+    id: fisher-murmansk2
+    name: "Trawler Sever-2"
+    balance: "175000000 RUB"
+    fishingZone: "Barents Sea"
+
+  - type: Fisher
+    id: fisher-kara
+    name: "Ice-Class Fisher Kara Dominator"
+    balance: "280000000 RUB"
+    fishingZone: "Kara Sea"
+
+  - type: Processor
+    id: proc-murmansk
+    name: "Murmansk Mega Fish Plant"
+    balance: "1200000000 RUB"
+
+  - type: Warehouse
+    id: wh-murmansk-giant
+    name: "Arctic Deep Freeze Complex"
+    balance: "800000000 RUB"
+
+  - type: Warehouse
+    id: wh-prague-hub
+    name: "Prague Transit Hub"
+    balance: "450000000 RUB"
+
+  - type: Distributor
+    id: dist-russia-eu
+    name: "TransSiberian Fish Logistics"
+    balance: "2500000000 RUB"
+
+  - type: Kitchen
+    id: rest-moscow
+    name: "Red Square Sushi & Caviar"
+    balance: "600000000 RUB"
+    acceptsDineIn: true
+    supportsDelivery: true
+    suppliesSupermarkets: false
+
+  - type: Kitchen
+    id: rest-prague
+    name: "Prague Russian Seafood Palace"
+    balance: "520000000 RUB"
+    acceptsDineIn: true
+    supportsDelivery: false
+    suppliesSupermarkets: true
+
+  - type: Customer
+    id: cust-oligarch
+    name: "Oligarch Ivan Petrovich"
+    balance: "100000000 RUB"
+
+  - type: Cook
+    id: cook-vladimir
+    name: "Master Chef Vladimir"
+
+  - type: Cook
+    id: cook-sergei
+    name: "Sous Chef Sergei"
+
+  - type: RepairTechnician
+    id: tech-murmansk1
+    name: "Technician Alexei"
+
+  - type: RepairTechnician
+    id: tech-murmansk2
+    name: "Technician Dmitri"
+
+  - type: RepairTechnician
+    id: tech-prague
+    name: "Technician Yuri"
+
+  - type: SCMManager
+    id: scm-director
+    name: "Supply Chain Tsar Mikhail"
+
+  - type: Inspector
+    id: inspector-fsb
+    name: "Federal Inspector Natalia"
+
+devices:
+  - type: IndustrialFreezer
+    id: freezer-arctic1
+    energyPerHour: 25.0
+    maintenanceCost: "1200000 RUB"
+
+  - type: IndustrialFreezer
+    id: freezer-arctic2
+    energyPerHour: 25.0
+    maintenanceCost: "1200000 RUB"
+
+  - type: HighSpeedFilletLine
+    id: fillet-line1
+    energyPerHour: 18.0
+    maintenanceCost: "1800000 RUB"
+
+  - type: PackingRobot
+    id: pack-robot1
+    energyPerHour: 12.0
+    maintenanceCost: "1500000 RUB"
+
+  - type: SushiRobotPremium
+    id: sushi-robot-moscow
+    energyPerHour: 6.5
+    maintenanceCost: "3000000 RUB"
+
+productionLines:
+  - name: "Mass Frozen Cod Production"
+    devices: ["fillet-line1", "freezer-arctic1", "pack-robot1"]
+    cooks: []
+    technicians: ["tech-murmansk1", "tech-murmansk2"]
+
+  - name: "Premium Sushi & Caviar Line"
+    devices: ["sushi-robot-moscow", "freezer-arctic2"]
+    cooks: ["cook-vladimir", "cook-sergei"]
+    technicians: ["tech-prague"]
+
+  - name: "King Crab & Luxury Export Line"
+    devices: ["freezer-arctic1", "pack-robot1"]
+    cooks: []
+    technicians: ["tech-murmansk1"]

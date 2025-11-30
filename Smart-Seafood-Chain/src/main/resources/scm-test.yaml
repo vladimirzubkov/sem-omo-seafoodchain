@@ -1,0 +1,75 @@
+# Fast test configuration – runs in seconds, covers all required features
+# 5 ticks = 5 hours of simulated time (1 tick = 1 hour)
+simulation:
+  maxTicks: 5
+
+company:
+  name: "Quick Test Seafood Chain"
+  description: "Minimal but complete config for fast testing and debugging"
+
+# One fishing region with two fish types – enough for the whole chain
+seaRegions:
+  - name: "North Sea"
+    seasonMultiplier: 1.5
+    fishTypes: ["Salmon", "Cod"]
+
+# 12+ entities → fully satisfies assignment requirements
+parties:
+  - type: Fisher
+    id: fisher-01
+    name: "Quick Fisher"
+    balance: "100000 CZK"
+    fishingZone: "North Sea"
+
+  - type: Processor
+    id: proc-01
+    name: "Fast Processing Plant"
+    balance: "500000 CZK"
+
+  - type: Warehouse
+    id: wh-01
+    name: "Cold Storage"
+    balance: "300000 CZK"
+
+  - type: Kitchen
+    id: rest-01
+    name: "Test Sushi Bar"
+    balance: "400000 CZK"
+    acceptsDineIn: true
+    supportsDelivery: false
+    suppliesSupermarkets: false
+
+  - type: Cook
+    id: cook-01
+    name: "Test Chef"
+
+  - type: RepairTechnician
+    id: tech-01
+    name: "Maintenance Tech"
+
+  - type: SCMManager
+    id: scm-01
+    name: "SCM Manager"
+
+  - type: Inspector
+    id: inspector-01
+    name: "Quality Inspector"
+
+# Devices used on the production line
+devices:
+  - type: IndustrialFreezer
+    id: freezer-01
+    energyPerHour: 5.0
+    maintenanceCost: "3000 CZK"
+
+  - type: FoodProcessingRobot
+    id: robot-01
+    energyPerHour: 4.0
+    maintenanceCost: "8000 CZK"
+
+# One production line – simple but functional
+productionLines:
+  - name: "Quick Sushi Line"
+    devices: ["freezer-01", "robot-01"]
+    cooks: ["cook-01"]
+    technicians: ["tech-01"]

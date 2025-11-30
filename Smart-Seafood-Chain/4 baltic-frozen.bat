@@ -1,0 +1,1 @@
+java -jar target/smart-seafood-chain.jar baltic-frozen.yaml

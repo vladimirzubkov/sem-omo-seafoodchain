@@ -1,0 +1,93 @@
+# src/main/resources/baltic-frozen.yaml
+simulation:
+  maxTicks: 336   # 2 недели, большой объём
+
+company:
+  name: "Baltic Frozen Supplies Ltd"
+  description: "High-volume frozen herring & sprat"
+
+seaRegions:
+  - name: "Baltic Sea"
+    seasonMultiplier: 0.7
+    fishTypes: ["Herring", "Sprat", "Cod", "Perch", "Salmon"]
+
+parties:
+  - type: Fisher
+    id: fisher-baltic1
+    name: "Baltic Trawler 1"
+    balance: "300000 CZK"
+    fishingZone: "Baltic Sea"
+
+  - type: Fisher
+    id: fisher-baltic2
+    name: "Baltic Trawler 2"
+    balance: "280000 CZK"
+    fishingZone: "Baltic Sea"
+
+  - type: Processor
+    id: proc-riga
+    name: "Riga Frozen Processing"
+    balance: "1800000 CZK"
+
+  - type: Warehouse
+    id: wh-riga-frozen
+    name: "Riga Deep Freeze"
+    balance: "1000000 CZK"
+
+  - type: Distributor
+    id: dist-central-eu
+    name: "Central EU Frozen Logistics"
+    balance: "3000000 CZK"
+
+  - type: Customer
+    id: supermkt-chain
+    name: "EuroMart Chain"
+    balance: "5000000 CZK"
+
+  - type: Customer
+    id: cust-retail
+    name: "Retail Customer"
+    balance: "10000 CZK"
+
+  - type: Cook
+    id: cook-frozen
+    name: "Industrial Cook Janis"
+
+  - type: RepairTechnician
+    id: tech-baltic1
+    name: "Tech Andris"
+
+  - type: RepairTechnician
+    id: tech-baltic2
+    # два техника — для стресса
+    name: "Tech Juris"
+
+  - type: SCMManager
+    id: scm-baltic
+    name: "SCM Baltic Director"
+
+  - type: Inspector
+    id: inspector-baltic
+    name: "Inspector Olga"
+
+devices:
+  - type: BlastFreezer
+    id: blast-01
+    energyPerHour: 12.0
+    maintenanceCost: "8000 CZK"
+
+  - type: PackingLine
+    id: pack-frozen
+    energyPerHour: 7.0
+    maintenanceCost: "5000 CZK"
+
+productionLines:
+  - name: "Frozen Blocks Line"
+    devices: ["blast-01", "pack-frozen"]
+    cooks: ["cook-frozen"]
+    technicians: ["tech-baltic1", "tech-baltic2"]
+
+  - name: "Frozen Fillets Line"
+    devices: ["blast-01"]
+    cooks: []
+    technicians: ["tech-baltic1"]

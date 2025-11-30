@@ -1,0 +1,100 @@
+# src/main/resources/nordic-fresh.yaml
+simulation:
+  maxTicks: 168   # week of work
+
+company:
+  name: "Norwegian Premium Seafood AS"
+  description: "Premium fresh salmon & cod from North Sea"
+
+seaRegions:
+  - name: "North Sea"
+    seasonMultiplier: 1.4
+    fishTypes: ["Salmon", "Cod", "Haddock", "Mackerel", "Herring"]
+
+  - name: "Norwegian Sea"
+    seasonMultiplier: 1.6
+    fishTypes: ["Salmon", "Cod", "Halibut"]
+
+parties:
+  - type: Fisher
+    id: fisher-north1
+    name: "Arctic Hunter"
+    balance: "500000 CZK"
+    fishingZone: "North Sea"
+
+  - type: Fisher
+    id: fisher-north2
+    name: "Fjords Pride"
+    balance: "450000 CZK"
+    fishingZone: "Norwegian Sea"
+
+  - type: Processor
+    id: proc-oslo
+    name: "Oslo Fresh Processing"
+    balance: "1200000 CZK"
+
+  - type: Warehouse
+    id: wh-oslo-cold
+    name: "Oslo Cold Storage"
+    balance: "800000 CZK"
+
+  - type: Distributor
+    id: dist-eu
+    name: "EuroFresh Distributor"
+    balance: "2000000 CZK"
+
+  - type: Kitchen
+    id: rest-prague-premium
+    name: "Oslo Sushi Prague"
+    balance: "900000 CZK"
+    acceptsDineIn: true
+    supportsDelivery: true
+    suppliesSupermarkets: false
+
+  - type: Customer
+    id: cust-vip1
+    name: "VIP Customer Prague"
+    balance: "50000 CZK"
+
+  - type: Cook
+    id: cook-sushi1
+    name: "Master Sushi Chef Ivan"
+
+  - type: RepairTechnician
+    id: tech1
+    name: "Technician Lars"
+
+  - type: SCMManager
+    id: scm-manager
+    name: "Supply Chain Director Anna"
+
+  - type: Inspector
+    id: inspector
+    name: "Quality Inspector Petra"
+
+devices:
+  - type: IndustrialFreezer
+    id: freezer-north
+    energyPerHour: 6.0
+    maintenanceCost: "4000 CZK"
+
+  - type: FilletingMachine
+    id: fillet-01
+    energyPerHour: 4.5
+    maintenanceCost: "6000 CZK"
+
+  - type: FoodProcessingRobot
+    id: robot-sushi-premium
+    energyPerHour: 4.0
+    maintenanceCost: "12000 CZK"
+
+productionLines:
+  - name: "Premium Fresh Sushi Line"
+    devices: ["fillet-01", "robot-sushi-premium"]
+    cooks: ["cook-sushi1"]
+    technicians: ["tech1"]
+
+  - name: "Fresh Fillet Packing Line"
+    devices: ["fillet-01", "freezer-north"]
+    cooks: []
+    technicians: ["tech1"]
