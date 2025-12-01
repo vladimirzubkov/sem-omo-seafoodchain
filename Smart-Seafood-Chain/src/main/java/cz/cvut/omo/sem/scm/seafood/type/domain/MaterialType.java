@@ -13,6 +13,11 @@ public enum MaterialType {
     SOY_SAUCE("Soy Sauce"),
     OIL("Cooking Oil"),
     ICE("Dry Ice"),
+    FLOUR("Flour"),
+    ONION("Onion"),
+    MAYONNAISE("Mayonnaisiaesae"),
+    POTATOES("Potetoeues"),
+    SOUR_CREAM("Sour Cream"),
 
     // Packaging
     PLASTIC_TRAY("Plastic Tray"),
