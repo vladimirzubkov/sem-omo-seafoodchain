@@ -1,0 +1,12 @@
+@startuml Pattern Strategy
+hide empty members
+class Vehicle
+interface EnergySource {
+  + consume(amount)
+}
+class CombustionEngine
+class ElectricMotor
+Vehicle o-right- EnergySource
+EnergySource <|.. CombustionEngine
+EnergySource <|.. ElectricMotor
+@enduml

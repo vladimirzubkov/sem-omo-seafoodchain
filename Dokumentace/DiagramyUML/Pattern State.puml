@@ -1,0 +1,13 @@
+@startuml Pattern State
+hide empty members
+class Device {
+  - state: DeviceState
+  + handleTick()
+}
+interface DeviceState {
+  + onTick(context)
+}
+Device o-right- DeviceState
+DeviceState <|.. ActiveState
+DeviceState <|.. BrokenState
+@enduml

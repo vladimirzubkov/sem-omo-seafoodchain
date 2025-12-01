@@ -1,0 +1,34 @@
+@startuml Pattern Builder
+' skinparam classAttributeIconSize 0
+hide empty members
+' skinparam class {
+'     BackgroundColor White
+'     ArrowColor Black
+'     BorderColor Black
+' }
+
+class EventBuilder {
+    ' ' Private fields (Data accumulation)
+    ' - timestamp: LocalDateTime
+    ' - type: EventType
+    ' - sourceId: String
+    ' - targetId: String
+    ' - description: String
+    ' - payload: Object
+
+    ' Fluent Setters (Return 'this')
+    + type(EventType): EventBuilder
+    + sourceId(String): EventBuilder
+    + targetId(String): EventBuilder
+    + description(String): EventBuilder
+    + payload(Object): EventBuilder
+    + timestamp(LocalDateTime): EventBuilder
+    ' Construction method
+    + build(): Event
+}
+
+' Relationship
+class Event <<record>>
+EventBuilder ..> Event : <<creates>>
+
+@enduml

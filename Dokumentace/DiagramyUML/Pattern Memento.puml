@@ -1,0 +1,21 @@
+@startuml Pattern Memento
+hide empty members
+class Simulator {
+  + saveCheckpoint()
+  + rollback()
+}
+class Caretaker {
+  - history: Stack<SimulationMemento>
+  + save(memento)
+  + undo(): SimulationMemento
+}
+class SimulationMemento <<record>> {
+  - tick: int
+  - timestamp: LocalDateTime
+  - snapshot: List<SimulationEntity>
+}
+
+Simulator .right.> SimulationMemento : creates
+Simulator o-right- Caretaker
+Caretaker o-down- SimulationMemento
+@enduml

@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.mmd": "markdown",
+    "*.mermaid": "markdown"
+  },
+  "markdown-preview-enhanced.previewTheme": "github-light"
+}

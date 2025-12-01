@@ -1,0 +1,12 @@
+@startuml Pattern Abstract Factory
+hide empty members
+abstract class EntityFactory {
+  + createEntities(config)
+}
+class SeafoodEntityFactory {
+  + createEntities(config)
+}
+class Simulator
+Simulator ..> EntityFactory
+EntityFactory <|-- SeafoodEntityFactory
+@enduml

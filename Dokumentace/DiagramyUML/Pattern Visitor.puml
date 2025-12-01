@@ -1,0 +1,13 @@
+@startuml Pattern Visitor
+hide empty members
+interface Visitable {
+  + accept(visitor)
+}
+interface EntityVisitor {
+  + visit(Device)
+  + visit(Party)
+}
+Visitable <|.. Device
+Visitable <|.. Party
+EntityVisitor <|.. InspectorVisitor
+@enduml

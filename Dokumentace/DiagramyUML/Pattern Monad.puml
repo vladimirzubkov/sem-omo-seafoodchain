@@ -1,0 +1,16 @@
+@startuml Pattern Monad
+hide empty members
+class "CookingProcess<T>" as Monad {
+  - isRuined: boolean
+  + {static} begin(item)
+  + bind(func): Monad
+  + map(func): Monad
+  + ensure(predicate): Monad
+  + complete(): CookingResult
+}
+interface Recipe {
+  + prepare(item, context): Monad
+}
+
+Recipe ..> Monad : creates pipeline
+@enduml

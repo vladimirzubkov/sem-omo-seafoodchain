@@ -1,0 +1,15 @@
+@startuml Pattern Composite
+hide empty members
+'skinparam linetype polyline
+
+abstract class Item {
+  + recordTemperature()
+}
+class Seafood
+class PackageContainer {
+  - contents: List<Item>
+}
+Item <|-- Seafood
+Item <|-- PackageContainer
+PackageContainer o-- Item : contains
+@enduml

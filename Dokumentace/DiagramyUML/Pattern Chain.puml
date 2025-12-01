@@ -1,0 +1,12 @@
+@startuml Pattern Chain
+hide empty members
+abstract class OrderHandler {
+  - next: OrderHandler
+  + handleOrder(req)
+}
+class MerchantOrderHandler
+class ProductionOrderHandler
+OrderHandler o-right- OrderHandler : next
+OrderHandler <|-- MerchantOrderHandler
+OrderHandler <|-- ProductionOrderHandler
+@enduml

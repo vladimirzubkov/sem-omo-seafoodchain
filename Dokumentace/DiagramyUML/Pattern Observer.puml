@@ -1,0 +1,11 @@
+@startuml Pattern Observer
+hide empty members
+class EventBus {
+  + subscribe(type, listener)
+  + publish(event)
+}
+interface EventListener {
+  + handleEvent(event)
+}
+EventBus o-right- EventListener
+@enduml

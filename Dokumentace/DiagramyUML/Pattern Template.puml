@@ -1,0 +1,9 @@
+@startuml Pattern Template
+hide empty members
+abstract class ReportTemplate {
+  + {final} generate()
+  # {abstract} formatContent()
+}
+class SecurityReport
+ReportTemplate <|-- SecurityReport
+@enduml
