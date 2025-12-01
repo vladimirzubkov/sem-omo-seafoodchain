@@ -3,6 +3,9 @@ package cz.cvut.omo.sem.scm.seafood.simulation;
 import lombok.Getter;
 import java.time.LocalDateTime;
 
+/**
+ * Global utility class, static and public methods (mono state)
+ */
 public class Time {
 
     @Getter

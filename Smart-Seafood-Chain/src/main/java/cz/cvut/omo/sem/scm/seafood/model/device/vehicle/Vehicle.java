@@ -1,12 +1,12 @@
 package cz.cvut.omo.sem.scm.seafood.model.device.vehicle;
 
 import cz.cvut.omo.sem.scm.seafood.model.device.Device;
-import cz.cvut.omo.sem.scm.seafood.model.device.vehicle.component.EnergySource; // Убедись, что импорт правильный (Strategy)
+import cz.cvut.omo.sem.scm.seafood.model.device.vehicle.component.EnergySource;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.device.ActiveState;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.device.BrokenState;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.device.SensorType;
-import cz.cvut.omo.sem.scm.seafood.type.operation.EventType; // Для событий
+import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
 import cz.cvut.omo.sem.scm.seafood.type.operation.LockState;
 import lombok.Getter;
 import lombok.Setter;

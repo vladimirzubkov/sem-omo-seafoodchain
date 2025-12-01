@@ -5,7 +5,7 @@ import cz.cvut.omo.sem.scm.seafood.model.item.Item;
 /**
  * State when item is in a fridge/freezer.
  */
-public class StorageState implements ItemLifecycleState {
+public class StoredState implements ItemLifecycleState {
 
     @Override
     public void handleTemperature(Item context, double currentTemp) {

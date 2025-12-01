@@ -21,7 +21,7 @@ public class CaughtState implements ItemLifecycleState {
     @Override
     public ItemLifecycleState nextState(Item context) {
         // Usually moves to Storage or Transport
-        return new StorageState();
+        return new StoredState();
     }
 
     @Override
