@@ -1,17 +1,15 @@
 package cz.cvut.omo.sem.scm.seafood.report;
 
 import cz.cvut.omo.sem.scm.seafood.event.Event;
-import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
+import cz.cvut.omo.sem.scm.seafood.model.party.Party;
+// Ensure we use the Visitor implementation from THIS package
+import cz.cvut.omo.sem.scm.seafood.report.FoodChainReport;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ReportGenerator {
 
@@ -26,80 +24,47 @@ public class ReportGenerator {
         }
     }
 
-    // --- Business logic (FRQ15) ---
-
     /**
-     * FRQ15: FoodChainReport - Movement of goods.
+     * Generates a historical report based on events.
      */
-    public static void generateFoodChainReport(List<Event> history) {
+    public static void generateFoodChainReport(List<Event> history, String configName) {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== FOOD CHAIN REPORT ===\n");
-        sb.append("Generated at: ").append(LocalDateTime.now()).append("\n\n");
+        sb.append("=== EVENT HISTORY REPORT ===\n");
+        sb.append("Configuration: %s\n".formatted(configName));
+        sb.append("Generated at: %s\n\n".formatted(LocalDateTime.now()));
 
-        // Filter events regarding goods movement
-        List<Event> chainEvents = history.stream()
-                .filter(e -> isChainEvent(e.type()))
-                .toList();
-
-        for (Event e : chainEvents) {
-            sb.append(String.format("[%s] %s: %s (Source: %s)\n",
-                    e.timestamp(), e.type(), e.description(), e.sourceId()));
+        for (Event e : history) {
+            sb.append("[%s] %s | %s\n".formatted(e.timestamp(), e.type(), e.description()));
         }
 
-        writeReport("FoodChainReport", sb.toString());
+        writeReport("EventLog", sb.toString());
     }
 
     /**
-     * FRQ15: OutagesReport - Breakdowns and Repairs.
+     * Generates a snapshot of the current state using Visitor Pattern.
      */
-    public static void generateOutagesReport(List<Event> history) {
+    public static void generateStateReport(List<Party> parties, String configName) {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== OUTAGES & MAINTENANCE REPORT ===\n\n");
+        sb.append("=== FINAL STATE & INVENTORY REPORT ===\n");
+        sb.append("Configuration: %s\n".formatted(configName));
+        sb.append("Generated at: %s\n\n".formatted(LocalDateTime.now()));
 
-        List<Event> breakdowns = history.stream()
-                .filter(e -> e.type() == EventType.DEVICE_BREAKDOWN)
-                .toList();
+        // Instantiate the Visitor
+        FoodChainReport visitor = new FoodChainReport();
 
-        sb.append("Total Breakdowns: ").append(breakdowns.size()).append("\n");
+        // Visit each party
+        for (Party party : parties) {
+            String partyReport = visitor.visit(party);
+            sb.append(partyReport).append("\n");
 
-        // Группировка по девайсам
-        Map<String, Long> failuresByDevice = breakdowns.stream()
-                .collect(Collectors.groupingBy(Event::sourceId, Collectors.counting()));
-
-        failuresByDevice.forEach((id, count) ->
-                sb.append(String.format("Device %s failed %d times.\n", id, count))
-        );
-
-        writeReport("OutagesReport", sb.toString());
-    }
-
-    /**
-     * FRQ15: SecurityReport - Manipulations.
-     */
-    public static void generateSecurityReport(List<Event> history) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== SECURITY AUDIT REPORT ===\n\n");
-
-        long issues = history.stream()
-                .filter(e -> e.type() == EventType.DOUBLE_SPENDING_DETECTED ||
-                        e.type() == EventType.BLOCKCHAIN_TAMPERING_DETECTED)
-                .peek(e -> sb.append(String.format("[ALERT] %s at %s. Details: %s\n",
-                        e.type(), e.timestamp(), e.description())))
-                .count();
-
-        if (issues == 0) {
-            sb.append("No security incidents detected. System integrity is 100%.\n");
+            // Audit blockchain if present
+            if (party.getBlockchain() != null) {
+                sb.append(visitor.generateBlockchainReport(party.getBlockchain()));
+                sb.append("\n--------------------------------------------------\n");
+            }
         }
 
-        writeReport("SecurityReport", sb.toString());
-    }
-
-    // --- Helper Methods ---
-
-    private static boolean isChainEvent(EventType type) {
-        return type == EventType.ITEM_CAUGHT ||
-                type == EventType.ITEM_TRANSFERRED ||
-                type == EventType.ITEM_SOLD;
+        writeReport("StateReport", sb.toString());
     }
 
     private static void writeReport(String fileName, String content) {
@@ -107,7 +72,7 @@ public class ReportGenerator {
         try {
             Files.writeString(Paths.get(REPORT_DIR, timestampedName), content,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            System.out.println("Report generated: " + timestampedName);
+            System.out.println("Report generated: %s".formatted(timestampedName));
         } catch (IOException e) {
             e.printStackTrace();
         }

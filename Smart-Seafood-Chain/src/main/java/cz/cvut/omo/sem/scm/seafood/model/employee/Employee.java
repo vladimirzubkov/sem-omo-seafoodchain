@@ -6,6 +6,8 @@ import cz.cvut.omo.sem.scm.seafood.event.EventListener;
 import cz.cvut.omo.sem.scm.seafood.model.SimulationEntity;
 import cz.cvut.omo.sem.scm.seafood.pattern.builder.EventBuilder;
 import cz.cvut.omo.sem.scm.seafood.model.employee.role.JobRole;
+import cz.cvut.omo.sem.scm.seafood.pattern.visitor.EntityVisitor;
+import cz.cvut.omo.sem.scm.seafood.pattern.visitor.Visitable;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.simulation.Time; // Dependency on Time utility
 import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
@@ -23,7 +25,7 @@ import java.util.Queue;
  */
 @Getter
 @Setter
-public class Employee extends SimulationEntity implements EventListener {
+public class Employee extends SimulationEntity implements EventListener, Visitable {
 
     private Money salaryPerHour;
     private int shiftStartHour;     // e.g., 9 for 09:00
@@ -39,6 +41,11 @@ public class Employee extends SimulationEntity implements EventListener {
     public Employee(String id, String name, Money salary) {
         super(id, name);
         this.salaryPerHour = salary;
+    }
+
+    @Override
+    public void accept(EntityVisitor visitor) {
+        visitor.visit(this);
     }
 
     public void addRole(JobRole role) {

@@ -3,6 +3,8 @@ package cz.cvut.omo.sem.scm.seafood.model.item;
 import cz.cvut.omo.sem.scm.seafood.blockchain.Blockchain;
 import cz.cvut.omo.sem.scm.seafood.blockchain.Transaction;
 import cz.cvut.omo.sem.scm.seafood.model.geo.SeaRegion;
+import cz.cvut.omo.sem.scm.seafood.pattern.state.item.CaughtState;
+import cz.cvut.omo.sem.scm.seafood.pattern.state.item.ItemLifecycleState;
 import cz.cvut.omo.sem.scm.seafood.type.operation.StorageTemperature;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -15,71 +17,78 @@ import java.util.List;
 /**
  * Abstract base class representing any goods in the supply chain.
  * Implements the COMPOSITE Pattern (as the Component).
+ * Implements PROTOTYPE Pattern (Cloneable) for Memento snapshots.
  */
 @Data
 @EqualsAndHashCode(of = "itemId")
-public abstract class Item {
+public abstract class Item implements Cloneable {
 
     private String itemId;
-    private String name; // Common name field for all item types (supports polymorphism)
-
+    private String name;
     private LocalDateTime catchTime;
     private SeaRegion originRegion;
-
-    private StorageTemperature requiredStorage = StorageTemperature.CHILLED; // default
-
-    // Traceability – required for Inspector and reports (FRQ4)
+    private StorageTemperature requiredStorage = StorageTemperature.CHILLED;
     private List<TemperatureRecord> temperatureHistory = new ArrayList<>();
-
-    private double currentTemperature = 0.0; // Current state
-    private double qualityLevel = 100.0;     // 0-100%, decreases if temp is wrong
-
-    // Common weight field (for single items, overridden by containers)
+    private double currentTemperature = 0.0;
+    private double qualityLevel = 100.0;
     private double weightKg = 0.0;
 
+    // --- STATE PATTERN INTEGRATION (FRQ17) ---
+    // Initial state is CaughtState
+    private ItemLifecycleState lifecycleState = new CaughtState();
+
     /**
-     * Records the temperature for this item at the current tick.
-     * If this is a container, it propagates the record to all contents.
-     * @param temp The measured temperature in Celsius.
+     * Transitions the item to the next logical state in its lifecycle.
      */
+    public void nextState() {
+        if (this.lifecycleState != null) {
+            this.lifecycleState = this.lifecycleState.nextState(this);
+            System.out.println("[ITEM STATE] Item %s transitioned to: %s".formatted(
+                    itemId, this.lifecycleState.getStateName()));
+        }
+    }
+
     public void recordTemperature(double temp) {
         temperatureHistory.add(new TemperatureRecord(LocalDateTime.now(), temp));
         currentTemperature = temp;
 
-        // Quality degradation logic: if temperature out of safe range
-        if (!requiredStorage.isSafe(temp)) {
-            qualityLevel = Math.max(0, qualityLevel - 2.0);
+        // Delegate logic to the current State
+        if (lifecycleState != null) {
+            lifecycleState.handleTemperature(this, temp);
         }
     }
 
-    /**
-     * Initializes the item origin (called by ProducerRole).
-     */
     public void markCaught(SeaRegion region, LocalDateTime time) {
         this.originRegion = region;
         this.catchTime = time;
+        // Reset state ensures we start correctly
+        this.lifecycleState = new CaughtState();
     }
 
-    /**
-     * Retrieves the origin proof from the Blockchain.
-     */
     public String getOriginCertificate(Blockchain blockchain) {
         return blockchain.findFirstTransaction(this.itemId)
-                .map(tx -> (String) Transaction.getHash(tx)) // Assuming Transaction has getHash
+                .map(Transaction::getHash)
                 .orElse("UNCERTIFIED");
     }
 
     // --- COMPOSITE PATTERN METHODS ---
+    public boolean isContainer() { return false; }
+    public List<Item> getContents() { return Collections.emptyList(); }
+    public double getTotalWeight() { return this.weightKg; }
 
-    public boolean isContainer() {
-        return false;
-    }
-
-    public List<Item> getContents() {
-        return Collections.emptyList();
-    }
-
-    public double getTotalWeight() {
-        return this.weightKg;
+    // --- PROTOTYPE PATTERN (For Memento) ---
+    @Override
+    public Item clone() {
+        try {
+            // Shallow copy via super.clone()
+            Item cloned = (Item) super.clone();
+            // Deep copy of mutable lists
+            cloned.temperatureHistory = new ArrayList<>(this.temperatureHistory);
+            // State objects are usually stateless or shared, but if they carry data, they should be cloned too.
+            // Here we assume State classes are essentially singletons/stateless logic containers.
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Cloning failed for Item", e);
+        }
     }
 }

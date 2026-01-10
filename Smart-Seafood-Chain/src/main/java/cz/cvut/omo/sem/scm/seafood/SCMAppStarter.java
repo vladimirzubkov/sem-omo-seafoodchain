@@ -14,28 +14,30 @@ public class SCMAppStarter {
             ========================================
             """);
 
-        // 1. Get the configuration filename from CLI arguments (or null for default)
-        String configFileName = args.length > 0 ? args[0] : null;
+        // 1. Get configuration filename
+        // Default to the complex one for testing if no args provided
+//        String configFileName = args.length > 0 ? args[0] : null;
+        String configFileName = args.length > 0 ? args[0] : "russian-sea-dominator.yaml"; // default, a month of continuous deliberate hard work
+//        String configFileName = "scm-test.yaml"; // 5 hours
+//        String configFileName = "prague-sushi-luxury.yaml"; // 3 days
+//        String configFileName = "nordic-fresh.yaml"; // one week
+//        String configFileName = "baltic-frozen.yaml"; // two weeks stress test
 
         try {
-            System.out.println("Loading configuration...");
+            System.out.println("Loading configuration: %s...".formatted(configFileName));
 
-            // 2. Load Configuration (Satisfies NFRQ1)
-            // YamlConfigLoader handles file parsing and fallback logic
             Configuration config = YamlConfigLoader.load(configFileName);
 
             System.out.println("Initializing simulation world...");
 
-            // 3. Initialize Simulator with the loaded configuration (Dependency Injection)
-            // The Simulator receives a ready-to-use config object
-            Simulator simulator = new Simulator(config);
+            // 2. Initialize Simulator with config AND config name
+            Simulator simulator = new Simulator(config, configFileName);
 
-            // 4. Start the simulation loop
+            // 3. Start
             simulator.start();
 
         } catch (Exception e) {
-            System.err.println("CRITICAL ERROR: Could not start simulation.");
-            System.err.println("Reason: %s".formatted(e.getMessage()));
+            System.err.println("Critical Error: %s".formatted(e.getMessage()));
             e.printStackTrace();
         }
     }
