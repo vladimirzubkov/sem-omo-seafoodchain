@@ -436,7 +436,10 @@ Vzor dodržuje "Hollywood Principle" (Don't call us, we'll call you) – rodičo
 
 #### 10. Prototyp 
 
-<div style="float: right; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern Prototype.png"> </div>
+<div style="float: right; margin: 10px 20px 20px 35px; width: 60%;">
+    <img src="DiagramyUML/plantuml-output/Pattern Prototype.png" 
+         style="max-width: 100%; height: auto; display: block;">
+</div>
 
 **Účel:** Umožňuje vytváření kopií objektů bez závislosti na jejich konkrétních třídách. V kontextu projektu je klíčový pro **Deep Copy** (hlubokou kopii) složitých objektů.
 
