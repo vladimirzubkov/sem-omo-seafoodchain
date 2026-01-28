@@ -19,7 +19,7 @@ import java.util.List;
 public class PackageContainer extends Item {
 
     private final String packagingType; // e.g., "Retail Box", "Shipping Pallet"
-    private final double tareWeight;    // Weight of the empty box itself
+    private final double tareWeight; // Weight of the empty box itself
 
     // The items inside this package
     private final List<Item> contents = new ArrayList<>();
@@ -27,6 +27,7 @@ public class PackageContainer extends Item {
     public PackageContainer(String id, String packagingType, double tareWeight) {
         this.setItemId(id);
         this.packagingType = packagingType;
+        this.setName(packagingType); // Fix: Set inherited 'name' field
         this.tareWeight = tareWeight;
     }
 
@@ -46,6 +47,7 @@ public class PackageContainer extends Item {
 
     /**
      * Empties the container.
+     * 
      * @return List of items that were inside.
      */
     public List<Item> unpack() {

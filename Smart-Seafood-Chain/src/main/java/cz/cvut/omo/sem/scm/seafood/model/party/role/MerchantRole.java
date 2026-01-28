@@ -49,6 +49,10 @@ public class MerchantRole implements BusinessRole {
 
         for (Item item : snapshot) {
             // Logic: Sell everything that is ready in the inventory.
+            // CHECK: Do not sell raw materials (Ingredients) intended for production!
+            if (item instanceof cz.cvut.omo.sem.scm.seafood.model.item.Material) {
+                continue;
+            }
 
             // 1. Calculate Price (Simple mock: 100 units per kg)
             double priceVal = item.getWeightKg() * 100.0;
@@ -63,8 +67,7 @@ public class MerchantRole implements BusinessRole {
                         targetPartner,
                         item,
                         OperationType.SALE,
-                        LocalDateTime.now()
-                );
+                        LocalDateTime.now());
             }
 
             // 4. Publish Event (Using dynamic currency)

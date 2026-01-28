@@ -292,6 +292,17 @@ public class SeafoodEntityFactory extends EntityFactory {
                 party.addRole(new ProcessorRole(recipes));
                 party.addRole(new StorageRole(1000.0, StorageTemperature.FROZEN));
                 party.addRole(new MerchantRole(true, true));
+
+                // INJECT STARTER INGREDIENTS so they can actually cook
+                // 1000 units of rice and boxes to start with
+                party.getInventory().add(new cz.cvut.omo.sem.scm.seafood.model.item.Material(
+                        "INIT-RICE-" + pc.getId(),
+                        cz.cvut.omo.sem.scm.seafood.type.domain.MaterialType.SUSHI_RICE,
+                        1000.0));
+                party.getInventory().add(new cz.cvut.omo.sem.scm.seafood.model.item.Material(
+                        "INIT-BOX-" + pc.getId(),
+                        cz.cvut.omo.sem.scm.seafood.type.domain.MaterialType.CARDBOARD_BOX,
+                        1000.0));
             }
 
             case STORAGE -> {

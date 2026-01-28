@@ -22,5 +22,5 @@ public class SimulationConfig {
 
     // Real-time delay between ticks in milliseconds (for better UX)
     // 1000 - one second, 0 = run as fast as possible
-    private int tickDelayMs = 1000;
+    private int tickDelayMs = 350;
 }
