@@ -6,8 +6,8 @@
 
 #### Dokumentace ve složce `Documentace/`:
 
-- 📄 [SmartSeafoodChain_doc.pdf](/Documentace/SmartSeafoodChain_doc.pdf)
+- 📄 [SmartSeafoodChain_doc.pdf](/Dokumentace/SmartSeafoodChain_doc.pdf)
 
-- 📄 [SmartSeafoodChain_doc.md](/Documentace/SmartSeafoodChain_doc.md)
+- 📄 [SmartSeafoodChain_doc.md](/Dokumentace/SmartSeafoodChain_doc.md)
 
-VZ.
+---
