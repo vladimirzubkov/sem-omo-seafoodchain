@@ -1,1 +1,2 @@
 java -jar target/smart-seafood-chain.jar prague-sushi-luxury.yaml
+pause

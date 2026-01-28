@@ -4,6 +4,7 @@ import cz.cvut.omo.sem.scm.seafood.event.Event;
 import cz.cvut.omo.sem.scm.seafood.event.EventBus;
 import cz.cvut.omo.sem.scm.seafood.event.EventListener;
 import cz.cvut.omo.sem.scm.seafood.model.SimulationEntity;
+import cz.cvut.omo.sem.scm.seafood.model.party.Party;
 import cz.cvut.omo.sem.scm.seafood.pattern.builder.EventBuilder;
 import cz.cvut.omo.sem.scm.seafood.model.employee.role.JobRole;
 import cz.cvut.omo.sem.scm.seafood.pattern.visitor.EntityVisitor;
@@ -11,6 +12,7 @@ import cz.cvut.omo.sem.scm.seafood.pattern.visitor.Visitable;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.simulation.Time; // Dependency on Time utility
 import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
+import cz.cvut.omo.sem.scm.seafood.type.role.LaborRoleType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,6 +29,7 @@ import java.util.Queue;
 @Setter
 public class Employee extends SimulationEntity implements EventListener, Visitable {
 
+    private Party employer; // employee works for a party
     private Money salaryPerHour;
     private int shiftStartHour;     // e.g., 9 for 09:00
     private int shiftDurationHours; // e.g., 8 hours
@@ -116,7 +119,13 @@ public class Employee extends SimulationEntity implements EventListener, Visitab
     private void processInbox() {
         while (!inbox.isEmpty()) {
             Event event = inbox.poll();
-            // TODO: Dispatch event logic to the appropriate role
+
+            // Strategy Pattern Delegation.
+            // The Employee doesn't need to know IF it's a breakdown or a fire.
+            // The Role decides whether to react.
+            for (JobRole role : roles) {
+                role.onEvent(event, this);
+            }
         }
     }
 

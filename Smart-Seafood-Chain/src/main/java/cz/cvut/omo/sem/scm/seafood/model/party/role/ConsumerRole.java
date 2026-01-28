@@ -15,9 +15,11 @@ import java.util.List;
  */
 public class ConsumerRole implements BusinessRole {
 
+    private final BusinessRoleType specificType; // RESTAURANT or CUSTOMER
     private final double appetite;
 
-    public ConsumerRole(double appetite) {
+    public ConsumerRole(BusinessRoleType specificType, double appetite) {
+        this.specificType = specificType;
         this.appetite = appetite;
     }
 
@@ -49,7 +51,8 @@ public class ConsumerRole implements BusinessRole {
 
         context.getInventory().remove(item);
 
-        System.out.println("[CONSUMER] %s consumed item: %s (Final State: %s)".formatted(
+        System.out.println("[%s] %s consumed item: %s (Final State: %s)".formatted(
+                specificType, // Dynamic log based on role type
                 context.getName(),
                 item.getItemId(),
                 (item.getLifecycleState() != null ? item.getLifecycleState().getStateName() : "N/A")
@@ -58,6 +61,6 @@ public class ConsumerRole implements BusinessRole {
 
     @Override
     public BusinessRoleType getRoleType() {
-        return BusinessRoleType.CONSUMER;
+        return specificType;
     }
 }

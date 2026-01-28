@@ -12,7 +12,4 @@ public abstract class EntityFactory {
 
     public abstract List<SimulationEntity> createEntities(Configuration config);
 
-    // Helper methods for specific types
-    // protected abstract Device createDevice(...);
-    // protected abstract Party createParty(...);
 }

@@ -1,0 +1,78 @@
+@startuml Pattern State sequential
+title Device Anomaly Detection & State Transition Sequence
+autonumber
+
+actor "Simulation Loop" as Sim
+participant "Device" as Dev
+participant "ActiveState" as State
+participant "IoTSensor" as Sensor
+participant "HysteresisCheck\n(Strategy)" as Strat
+participant "EventBus" as Bus
+
+' 1. Simulation Tick
+Sim -> Dev: handleTick()
+activate Dev
+
+' 2. Delegation to State (State Pattern)
+Dev -> State: onTick(this)
+activate State
+note right of State
+  ActiveState controls behavior:
+  consumes energy, updates sensors
+end note
+
+' 3. Trigger Sensor Update
+State -> Dev: updateSensors()
+activate Dev
+
+loop For each IoTSensor
+    ' 4. Physical Measurement
+    Dev -> Sensor: measure(baseValue)
+    activate Sensor
+    Sensor --> Dev: currentValue (simulation noise added)
+    deactivate Sensor
+
+    ' 5. Check for Anomaly
+    Dev -> Dev: checkAnomaly(sensor, target)
+    activate Dev #DarkSalmon
+
+    ' 6. Validation Strategy (Strategy Pattern)
+    ' The Device delegates the decision logic to the Strategy
+    Dev -> Strat: isAnomaly(current, target, isAlertActive)
+    activate Strat
+    
+    note right of Strat
+      Hysteresis Logic:
+      Checks if value > threshold
+      considering the reset buffer
+    end note
+
+    Strat --> Dev: return **true** (Anomaly Confirmed)
+    deactivate Strat
+
+    ' 7. Reaction to Failure
+    opt Anomaly Detected
+        Dev -> Sensor: setAlertActive(true)
+
+        ' A. Notify System (Observer Pattern)
+        Dev -> Bus: publish(DEVICE_BREAKDOWN)
+        note right: EventLogger & MaintenanceRole\nwill receive this event
+
+        ' B. State Transition (State Pattern)
+        create participant "BrokenState" as Broken
+        Dev -> Broken: <<create>>
+        Dev -> Dev: setState(new BrokenState())
+        
+        note right of Dev
+           CRITICAL: Device stops operating.
+           Future ticks will be handled by BrokenState.
+        end note
+    end
+
+    deactivate Dev
+end
+
+deactivate Dev
+deactivate State
+deactivate Dev
+@enduml

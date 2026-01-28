@@ -1,0 +1,43 @@
+# edge-case.yaml - Boundary Conditions Test
+simulation:
+  maxTicks: 24   # Edge Case 1: Minimum duration (1 day)
+
+company:
+  name: "Edge Case Inc."
+  description: "Testing boundary conditions"
+
+seaRegions:
+  - name: "Dead Sea"
+    seasonMultiplier: 0.05 # Edge Case 2: Extremely low catch rate
+    fishTypes: ["Herring", "Sprat", "GoldFish"] # GoldFish is unknown to recipes
+
+parties:
+  - type: Fisher
+    id: fisher-poor
+    name: "Poor Fisherman"
+    balance: "10 CZK" # Edge Case 3: Nearly bankrupt
+    fishingZones:
+      - "Dead Sea"
+
+  - type: Processor
+    id: proc-minimal
+    name: "Minimalist Processing"
+    balance: "1000 CZK"
+
+  - type: Customer
+    id: cust-impatience
+    name: "Impatient Customer"
+    balance: "500000 CZK" # Rich but maybe no supply
+
+devices:
+  - type: IndustrialFreezer
+    id: freezer-broke
+    energyPerHour: 100.0 # Edge Case 4: High energy consumption
+    maintenanceCost: "1 CZK"
+
+productionLines:
+  - name: "Minimal Line"
+    ownerId: "proc-minimal"
+    devices: ["freezer-broke"] # Minimal device set
+    cooks: []
+    technicians: [] 

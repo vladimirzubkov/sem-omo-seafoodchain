@@ -9,7 +9,7 @@ import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
 
 /**
  * Visitor implementation solely for Dependency Injection / Initialization.
- * Replaces instanceof checks in Simulator.
+ * Replaces instanceof checks in SimulationController.
  */
 public class WorldSetupVisitor implements EntityVisitor {
 

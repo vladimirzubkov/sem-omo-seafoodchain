@@ -8,6 +8,23 @@ import java.util.List;
 import java.util.Map;
 
 public class EventBus {
+
+    // --- SINGLETON IMPLEMENTATION ---
+    private static volatile EventBus instance;
+
+    private EventBus() { }
+
+    public static EventBus getInstance() {
+        if (instance == null) {
+            synchronized (EventBus.class) {
+                if (instance == null) {
+                    instance = new EventBus();
+                }
+            }
+        }
+        return instance;
+    }
+
     // Map: Event Type -> List of eager listeners (obeservers)
     private final Map<EventType, List<EventListener>> listeners = new HashMap<>();
 
@@ -24,5 +41,14 @@ public class EventBus {
                 listener.handleEvent(event);
             }
         }
+    }
+
+    /**
+     * Clears all listeners.
+     * Call this before starting a new simulation.
+     */
+    public void reset() {
+        listeners.clear();
+        System.out.println("[EventBus] Subscribers cleared.");
     }
 }

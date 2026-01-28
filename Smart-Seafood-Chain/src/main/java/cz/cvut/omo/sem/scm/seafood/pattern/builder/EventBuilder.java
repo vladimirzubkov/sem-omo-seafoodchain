@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 /**
  * Builder Pattern implementation for Event class.
  * Separated from the model class to strictly follow the pattern structure.
+ * Provides fluent interface for event building, checks for data validity (nulls, etc.) at the final step .build,
+ * and returns an immutable Event object (record), (note: this is 'shallow immutability' - content of the payload may change,
+ * as it accepts Object type).
  */
 public class EventBuilder {
 
@@ -39,6 +42,7 @@ public class EventBuilder {
         return this;
     }
 
+    // note that here content of the object may change
     public EventBuilder payload(Object payload) {
         this.payload = payload;
         return this;

@@ -3,6 +3,7 @@ package cz.cvut.omo.sem.scm.seafood.model.device.vehicle;
 import cz.cvut.omo.sem.scm.seafood.model.device.vehicle.component.CombustionEngine;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.device.SensorType;
+import cz.cvut.omo.sem.scm.seafood.type.device.VehicleCategory;
 import cz.cvut.omo.sem.scm.seafood.type.resource.ResourceType;
 
 public class DeliveryVan extends Vehicle {
@@ -25,5 +26,10 @@ public class DeliveryVan extends Vehicle {
         if (type == SensorType.ELECTRONIC_LOCK) return getLockStatus();
         if (type == SensorType.VIBRATION) return isOperational() ? 1.5 : 0.0;
         return 0.0;
+    }
+
+    @Override
+    public VehicleCategory getCategory() {
+        return VehicleCategory.LIGHT_COMMERCIAL;
     }
 }

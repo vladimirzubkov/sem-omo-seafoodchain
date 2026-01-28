@@ -1,6 +1,6 @@
 # src/main/resources/nordic-fresh.yaml
 simulation:
-  maxTicks: 168   # week of work
+  maxTicks: 168  # week of work
 
 company:
   name: "Norwegian Premium Seafood AS"
@@ -20,13 +20,15 @@ parties:
     id: fisher-north1
     name: "Arctic Hunter"
     balance: "500000 CZK"
-    fishingZone: "North Sea"
+    fishingZones:
+      - "North Sea"
 
   - type: Fisher
     id: fisher-north2
     name: "Fjords Pride"
     balance: "450000 CZK"
-    fishingZone: "Norwegian Sea"
+    fishingZones:
+      - "Norwegian Sea"
 
   - type: Processor
     id: proc-oslo
@@ -78,23 +80,30 @@ devices:
     energyPerHour: 6.0
     maintenanceCost: "4000 CZK"
 
-  - type: FilletingMachine
+  - type: FoodProcessingRobot
     id: fillet-01
     energyPerHour: 4.5
     maintenanceCost: "6000 CZK"
+    capabilities:
+      - "FILLETING"
 
   - type: FoodProcessingRobot
     id: robot-sushi-premium
     energyPerHour: 4.0
     maintenanceCost: "12000 CZK"
+    capabilities:
+      - "CHOPPING"  # Slicing sushi
+      - "MIXING"    # Preparing rice
 
 productionLines:
   - name: "Premium Fresh Sushi Line"
+    ownerId: "proc-oslo"
     devices: ["fillet-01", "robot-sushi-premium"]
     cooks: ["cook-sushi1"]
     technicians: ["tech1"]
 
   - name: "Fresh Fillet Packing Line"
+    ownerId: "proc-oslo"
     devices: ["fillet-01", "freezer-north"]
     cooks: []
     technicians: ["tech1"]

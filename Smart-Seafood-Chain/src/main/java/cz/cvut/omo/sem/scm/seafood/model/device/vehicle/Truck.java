@@ -3,6 +3,7 @@ package cz.cvut.omo.sem.scm.seafood.model.device.vehicle;
 import cz.cvut.omo.sem.scm.seafood.model.device.vehicle.component.CombustionEngine;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.device.SensorType;
+import cz.cvut.omo.sem.scm.seafood.type.device.VehicleCategory;
 import cz.cvut.omo.sem.scm.seafood.type.operation.StorageTemperature;
 import cz.cvut.omo.sem.scm.seafood.type.resource.ResourceType;
 
@@ -33,5 +34,10 @@ public class Truck extends Vehicle {
             case VIBRATION -> isOperational() ? 2.0 : 0.0;
             default -> 0.0;
         };
+    }
+
+    @Override
+    public VehicleCategory getCategory() {
+        return VehicleCategory.HEAVY_DUTY;
     }
 }

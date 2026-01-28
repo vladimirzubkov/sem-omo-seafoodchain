@@ -1,10 +1,13 @@
 package cz.cvut.omo.sem.scm.seafood.model.party.role;
 
 import cz.cvut.omo.sem.scm.seafood.blockchain.Transaction;
+import cz.cvut.omo.sem.scm.seafood.event.EventBus;
 import cz.cvut.omo.sem.scm.seafood.model.item.Item;
 import cz.cvut.omo.sem.scm.seafood.model.party.Party;
-import cz.cvut.omo.sem.scm.seafood.resource.Money;
+import cz.cvut.omo.sem.scm.seafood.pattern.builder.EventBuilder;
+import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
 import cz.cvut.omo.sem.scm.seafood.type.operation.OperationType;
+import cz.cvut.omo.sem.scm.seafood.type.resource.Currency;
 import cz.cvut.omo.sem.scm.seafood.type.role.BusinessRoleType;
 import lombok.Setter;
 
@@ -17,7 +20,7 @@ public class MerchantRole implements BusinessRole {
     private final boolean isBuyer;
     private final boolean isSeller;
 
-    // The partner to trade with (simplified logic: pushing goods to the next link in the chain)
+    // The partner to trade with (pushes goods to the next link in the chain)
     @Setter
     private Party targetPartner;
 
@@ -38,17 +41,22 @@ public class MerchantRole implements BusinessRole {
         // Use a copy to safely remove items while iterating
         List<Item> snapshot = new ArrayList<>(seller.getInventory());
 
-        for (Item item : snapshot) {
-            // Logic: Sell only items that are NOT raw materials (unless selling to Processor)
-            // For simplicity in this simulation: Sell everything that is ready.
+        // Directly retrieve currency (handled by Party class)
+        Currency currency = seller.getCurrency();
+        if (currency == null) {
+            currency = Currency.USD; // Safety fallback just in case config is empty
+        }
 
-            // 1. Calculate Price (Simple mock: 100 CZK/kg)
+        for (Item item : snapshot) {
+            // Logic: Sell everything that is ready in the inventory.
+
+            // 1. Calculate Price (Simple mock: 100 units per kg)
             double priceVal = item.getWeightKg() * 100.0;
 
-            // 2. Execute Trade
+            // 2. Execute Trade (Move item from Seller to Buyer)
             transferItem(seller, targetPartner, item);
 
-            // 3. Record in Blockchain (Critical for FRQ2)
+            // 3. Record in Blockchain (Critical for traceability)
             if (seller.getBlockchain() != null) {
                 seller.getBlockchain().addTransaction(
                         seller,
@@ -59,8 +67,26 @@ public class MerchantRole implements BusinessRole {
                 );
             }
 
-            System.out.println("[MERCHANT] %s sold %s to %s for %.2f CZK".formatted(
-                    seller.getName(), item.getItemId(), targetPartner.getName(), priceVal));
+            // 4. Publish Event (Using dynamic currency)
+            EventBus.getInstance().publish(new EventBuilder()
+                    .type(EventType.TRANSACTION_COMPLETED)
+                    .sourceId(seller.getId())
+                    .targetId(targetPartner.getId())
+                    .description("Sold %s to %s for %.2f %s".formatted(
+                            item.getItemId(),
+                            targetPartner.getName(),
+                            priceVal,
+                            currency))
+                    .payload(item)
+                    .build());
+
+            // 5. Console Log
+            System.out.println("[MERCHANT] %s sold %s to %s for %.2f %s".formatted(
+                    seller.getName(),
+                    item.getItemId(),
+                    targetPartner.getName(),
+                    priceVal,
+                    currency));
         }
     }
 

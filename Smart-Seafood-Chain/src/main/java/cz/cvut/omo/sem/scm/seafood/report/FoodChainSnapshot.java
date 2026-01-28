@@ -8,7 +8,7 @@ import cz.cvut.omo.sem.scm.seafood.model.party.Party;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FoodChainReport implements ReportVisitor {
+public class FoodChainSnapshot implements ReportVisitor {
 
     @Override
     public String visit(Party party) {

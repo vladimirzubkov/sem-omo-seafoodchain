@@ -4,8 +4,11 @@ import cz.cvut.omo.sem.scm.seafood.event.Event;
 import cz.cvut.omo.sem.scm.seafood.event.EventBus;
 import cz.cvut.omo.sem.scm.seafood.model.SimulationEntity;
 import cz.cvut.omo.sem.scm.seafood.model.device.sensor.IoTSensor;
+import cz.cvut.omo.sem.scm.seafood.model.device.sensor.hysteresis.HysteresisCheck;
+import cz.cvut.omo.sem.scm.seafood.model.device.sensor.hysteresis.SensorValidationStrategy;
 import cz.cvut.omo.sem.scm.seafood.pattern.builder.EventBuilder;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.device.ActiveState;
+import cz.cvut.omo.sem.scm.seafood.pattern.state.device.BrokenState;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.device.DeviceState;
 import cz.cvut.omo.sem.scm.seafood.pattern.visitor.EntityVisitor;
 import cz.cvut.omo.sem.scm.seafood.pattern.visitor.Visitable;
@@ -26,8 +29,7 @@ import java.util.List;
 public abstract class Device extends SimulationEntity implements Visitable {
 
     private double wearLevel = 0.0; // 0.0 to 1.0 (100%)
-
-    // REDUNDANCY REMOVED: 'isOperational' is now determined by the State object.
+    private double totalEnergyConsumed = 0.0;
 
     private ResourceType primaryResourceType;
     private double consumptionPerHour;
@@ -41,11 +43,26 @@ public abstract class Device extends SimulationEntity implements Visitable {
     // COMPOSITION: Device has IoT Sensors
     private List<IoTSensor> sensors = new ArrayList<>();
 
+    // Strategy for sensor validation (Composition)
+    // Default hysteresis: 5.0 degrees deviation allowed, 1.0 degree buffer for reset
+    private SensorValidationStrategy sensorStrategy = new HysteresisCheck(5.0, 1.0);
+
     public Device(String id, String name, ResourceType resType, double consumption, Money cost) {
         super(id, name);
         this.primaryResourceType = resType;
         this.consumptionPerHour = consumption;
         this.maintenanceCost = cost;
+    }
+
+    // Logic called by ActiveState
+    public void consumeEnergy() {
+        // In a complex sim, we would deduct money from Party here.
+        // For now, we track usage statistics.
+        this.totalEnergyConsumed += this.consumptionPerHour;
+
+        // Optional: Log heavy consumers to console
+        // System.out.println("Device %s consumed %.2f %s".formatted(
+        //        getName(), consumptionPerHour, primaryResourceType.getUnit()));
     }
 
     // --- VISITOR PATTERN ---
@@ -55,7 +72,6 @@ public abstract class Device extends SimulationEntity implements Visitable {
     }
 
     // --- STATE PATTERN DELEGATION ---
-
     @Override
     public void handleTick() {
         // Delegate logic to the current state (Active, Broken, Repairing)
@@ -70,7 +86,6 @@ public abstract class Device extends SimulationEntity implements Visitable {
     }
 
     // --- SENSOR LOGIC ---
-
     public void attachSensor(SensorType type) {
         String sensorId = "%s-sensor-%s".formatted(this.getId(), type.name());
         this.sensors.add(new IoTSensor(sensorId, type));
@@ -92,24 +107,50 @@ public abstract class Device extends SimulationEntity implements Visitable {
         }
     }
 
+    /**
+     * Checks sensor data for anomalies using the injected Strategy.
+     */
     protected void checkAnomaly(IoTSensor sensor, double targetValue) {
-        // TODO: Inject SensorValidationStrategy here (Hysteresis check)
-        // For now, simple logic:
-        double diff = Math.abs(sensor.getCurrentValue() - targetValue);
-        if (diff > 5.0 && !sensor.isAlertActive()) {
+        // Delegate validation to the Strategy (Hysteresis)
+        // We pass current value, target value, and the CURRENT alert status to handle the buffer logic
+        boolean isAnomalyNow = sensorStrategy.isAnomaly(
+                sensor.getCurrentValue(),
+                targetValue,
+                sensor.isAlertActive()
+        );
+
+        // State switching logic based on Strategy result
+        if (isAnomalyNow && !sensor.isAlertActive()) {
+            // Case: Anomaly just started
             sensor.setAlertActive(true);
-            fireEvent(EventType.DEVICE_BREAKDOWN, "Sensor anomaly detected: %s".formatted(sensor.getType()));
+
+            // 1. Notify listeners
+            fireEvent(EventType.DEVICE_BREAKDOWN, "Sensor anomaly detected: %s (Val: %.2f)".formatted(
+                    sensor.getType(), sensor.getCurrentValue()));
+
+            // 2. CRITICAL: Force state transition to Broken to stop the machine immediately.
+            this.setState(new BrokenState());
+
+        } else if (!isAnomalyNow && sensor.isAlertActive()) {
+            // Case: Anomaly ended (system returned to normal within hysteresis limits)
+            sensor.setAlertActive(false);
+
+            // Optional: We could fire a "Normalization" event here,
+            // but the device usually remains in BrokenState until a technician fixes it manually.
         }
     }
 
     // --- HELPER FOR EVENTS ---
-
+    // Automatically prepends the Device ID to the description, so reports are readable
     public void fireEvent(EventType type, String description) {
         if (eventBus != null) {
+
+            String enhancedDescription = "[Device: %s] %s".formatted(this.getId(), description);
+
             Event event = new EventBuilder()
                     .type(type)
                     .sourceId(this.getId())
-                    .description(description)
+                    .description(enhancedDescription)
                     .build();
             eventBus.publish(event);
         }

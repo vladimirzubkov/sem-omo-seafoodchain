@@ -1,6 +1,6 @@
 # src/main/resources/baltic-frozen.yaml
 simulation:
-  maxTicks: 336   # 2 недели, большой объём
+  maxTicks: 336   # 2 weeks, large volume
 
 company:
   name: "Baltic Frozen Supplies Ltd"
@@ -16,13 +16,15 @@ parties:
     id: fisher-baltic1
     name: "Baltic Trawler 1"
     balance: "300000 CZK"
-    fishingZone: "Baltic Sea"
+    fishingZones:
+      - "Baltic Sea"
 
   - type: Fisher
     id: fisher-baltic2
     name: "Baltic Trawler 2"
     balance: "280000 CZK"
-    fishingZone: "Baltic Sea"
+    fishingZones:
+      - "Baltic Sea"
 
   - type: Processor
     id: proc-riga
@@ -57,9 +59,9 @@ parties:
     id: tech-baltic1
     name: "Tech Andris"
 
+  # second technician — for high load handling and stress testing
   - type: RepairTechnician
     id: tech-baltic2
-    # два техника — для стресса
     name: "Tech Juris"
 
   - type: SCMManager
@@ -71,23 +73,26 @@ parties:
     name: "Inspector Olga"
 
 devices:
-  - type: BlastFreezer
+  - type: IndustrialFreezer
     id: blast-01
     energyPerHour: 12.0
     maintenanceCost: "8000 CZK"
 
-  - type: PackingLine
+  - type: PackagingMachine
     id: pack-frozen
     energyPerHour: 7.0
     maintenanceCost: "5000 CZK"
+    # Optional: speed: 100 (packages per minute)
 
 productionLines:
   - name: "Frozen Blocks Line"
+    ownerId: "proc-riga"
     devices: ["blast-01", "pack-frozen"]
     cooks: ["cook-frozen"]
     technicians: ["tech-baltic1", "tech-baltic2"]
 
   - name: "Frozen Fillets Line"
+    ownerId: "proc-riga"
     devices: ["blast-01"]
     cooks: []
     technicians: ["tech-baltic1"]

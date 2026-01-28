@@ -6,6 +6,7 @@ import cz.cvut.omo.sem.scm.seafood.pattern.state.device.ActiveState;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.device.BrokenState;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.device.SensorType;
+import cz.cvut.omo.sem.scm.seafood.type.device.VehicleCategory;
 import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
 import cz.cvut.omo.sem.scm.seafood.type.operation.LockState;
 import lombok.Getter;
@@ -38,8 +39,22 @@ public abstract class Vehicle extends Device {
         this.attachSensor(SensorType.ELECTRONIC_LOCK);
     }
 
+    /**
+     * Polymorphic method to get the vehicle class.
+     * Forces subclasses to declare their category.
+     */
+    public abstract VehicleCategory getCategory();
+
     protected double getLockStatus() {
         return currentLockState.getSignalValue();
+    }
+
+    @Override
+    public void consumeEnergy() {
+        // Prevent double consumption.
+        // Vehicles handle their own fuel logic via EnergySource strategy in handleTick().
+        // We can just log specific Vehicle consumption here if needed,
+        // or leave empty to rely on the powerUnit.consume() call.
     }
 
     /**

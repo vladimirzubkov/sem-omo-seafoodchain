@@ -8,12 +8,13 @@ import cz.cvut.omo.sem.scm.seafood.type.operation.StorageTemperature;
 import cz.cvut.omo.sem.scm.seafood.type.role.BusinessRoleType;
 import cz.cvut.omo.sem.scm.seafood.simulation.Time;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 
 /**
- * Role responsible for catching/harvesting seafood from a specific region.
+ * Represents a single fishing unit (e.g., a vessel or fleet) operating in ONE
+ * specific region.
+ * For multi-region companies, attach multiple instances of this role.
  */
 public class ProducerRole implements BusinessRole {
 
@@ -30,34 +31,42 @@ public class ProducerRole implements BusinessRole {
     public void performLogic(Party context) {
         // 1. Simulation of luck (fishing probability)
         if (random.nextDouble() > catchProbability) {
-            return; // No catch this tick
+            return; // No catch this hour
         }
 
-        // 2. Select a random fish type available in this region
+        // 2. Select random fish from THIS region
         List<SeafoodType> availableFish = region.getSeaFoodList();
-        if (availableFish.isEmpty()) return;
+        if (availableFish.isEmpty())
+            return;
 
         SeafoodType type = availableFish.get(random.nextInt(availableFish.size()));
 
-        // 3. Create the catch (Random weight: 5kg to 100kg for wholesale)
-        double weight = 5.0 + (random.nextDouble() * 95.0);
-        String batchId = "BATCH-" + System.currentTimeMillis() + "-" + random.nextInt(1000);
+        // 3. Generate Catch (Simulating a haul)
+        // Weight depends on season
+        double weight = (10.0 + random.nextDouble() * 90.0) * region.getSeasonMultiplier();
 
-        Seafood catchItem = new Seafood(batchId, type, weight, true);
+        Seafood catchItem = new Seafood("CATCH-" + System.nanoTime(), type, weight, true);
         catchItem.markCaught(region, Time.getCurrentTime());
 
-        // The fish is fresh out of water (approx 5 degrees Celsius)
-        catchItem.setCurrentTemperature(5.0);
+        // Fresh fish settings
+        catchItem.setCurrentTemperature(4.0);
         catchItem.setRequiredStorage(StorageTemperature.CHILLED);
 
-        // 4. Add to Party's inventory
+        // 4. Add to Inventory
         context.getInventory().add(catchItem);
 
-        // 5. Log the event (Console output for debugging)
-        System.out.println("[PRODUCER] %s caught %.2f kg of %s in %s".formatted(
-                context.getName(), weight, type, region.getName()));
+        String description = "[PRODUCER] %s caught %.1f kg of %s in %s".formatted(
+                context.getName(), weight, type, region.getName());
 
-        // TODO: Fire ITEM_CAUGHT event to EventBus if Party has reference to it
+        System.out.println(description);
+
+        cz.cvut.omo.sem.scm.seafood.event.EventBus.getInstance().publish(new cz.cvut.omo.sem.scm.seafood.event.Event(
+                null,
+                cz.cvut.omo.sem.scm.seafood.type.operation.EventType.ITEM_CAUGHT,
+                context.getName(),
+                "Inventory",
+                description,
+                catchItem));
     }
 
     @Override

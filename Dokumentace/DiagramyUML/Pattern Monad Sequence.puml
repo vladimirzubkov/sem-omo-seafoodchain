@@ -1,0 +1,68 @@
+@startuml Pattern Monad Sequence
+autonumber
+title Sequence: Monad Pattern (Cooking Process)
+
+participant "Client\n(Recipe)" as Client
+participant "CookingProcess\n(Monad)" as CP
+participant "CookingProcess\n(New Instance)" as CP_New
+participant "Inventory\n(Party)" as Party
+
+== SUCCESS PATH (Railway Track 1) ==
+
+Client -> CP: begin(rawFish)
+activate CP
+    CP --> Client: Monad(rawFish, valid=true)
+deactivate CP
+
+note right: Monad wraps data\nand validation state
+
+Client -> CP: ensure(checkFreshness)
+activate CP
+    CP -> CP: test(rawFish)
+    CP --> Client: Monad(rawFish, valid=true)
+deactivate CP
+
+Client -> CP: process(FILLETING, action)
+activate CP
+    CP -> CP: apply(action)
+    create CP_New
+    CP -> CP_New: new Monad(filletedFish, valid=true)
+    CP --> Client: Monad(filletedFish, valid=true)
+deactivate CP
+
+Client -> CP_New: requireIngredient(SALT)
+activate CP_New
+    CP_New -> Party: consumeMaterial(SALT)
+    activate Party
+    Party --> CP_New: true (Found)
+    deactivate Party
+    
+    CP_New --> Client: Monad(filletedFish, valid=true)
+deactivate CP_New
+
+== FAILURE PATH (Railway Track 2) ==
+
+Client -> CP_New: requireIngredient(GOLD_DUST)
+activate CP_New
+    CP_New -> Party: consumeMaterial(GOLD_DUST)
+    activate Party
+    Party --> CP_New: false (Missing)
+    deactivate Party
+
+    create participant "CookingProcess\n(Ruined)" as CP_Fail
+    CP_New -> CP_Fail: new Monad(null, valid=false)
+    CP_New --> Client: Monad(Ruined)
+deactivate CP_New
+
+Client -> CP_Fail: transform(cook)
+activate CP_Fail
+    note right: <b>Short-circuiting:</b>\nOperation skipped because\nstate is already invalid
+    CP_Fail --> Client: Monad(Ruined)
+deactivate CP_Fail
+
+Client -> CP_Fail: complete()
+activate CP_Fail
+    CP_Fail --> Client: Result(success=false, logs)
+deactivate CP_Fail
+
+@enduml

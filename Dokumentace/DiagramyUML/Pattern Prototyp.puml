@@ -1,0 +1,36 @@
+@startuml Pattern Prototype
+' skinparam classAttributeIconSize 0
+hide empty members
+
+interface Cloneable <<interface>> {
+}
+
+class Party {
+    - List<Item> inventory
+    - List<BusinessRole> roles
+    + clone() : Party
+}
+
+class Item {
+    - double weightKg
+    + clone() : Item
+}
+
+class SimulationMemento {
+    - Party storedState
+    + SimulationMemento(Party p)
+}
+
+Cloneable <|.. Party
+Cloneable <|.. Item
+Party *-- "*" Item : contains >
+SimulationMemento ..> Party : calls clone() <<deep copy>>
+
+note right of Party::clone
+  // Deep Copy Logic:
+  cloned.inventory = new ArrayList<>();
+  for(Item i : this.inventory) {
+      cloned.inventory.add(i.clone());
+  }
+end note
+@enduml

@@ -12,17 +12,29 @@ import java.util.stream.Collectors;
 /**
  * Central Ledger.
  * In a real decentralized system, this would be distributed.
- * For this simulation, it's a Singleton-like service managed by the Simulator.
+ * For this simulation, it's a Singleton-like service managed by the SimulationController.
  */
 public class Blockchain {
+
+    // --- SINGLETON IMPLEMENTATION ---
+    private static volatile Blockchain instance;
+
+    private Blockchain() { }
+
+    public static Blockchain getInstance() {
+        if (instance == null) {
+            synchronized (Blockchain.class) {
+                if (instance == null) {
+                    instance = new Blockchain();
+                }
+            }
+        }
+        return instance;
+    }
 
     // The single source of truth - sequential list of blocks/transactions
     @Getter
     private final List<Transaction> chain = new ArrayList<>();
-
-    public Blockchain() {
-        // No genesis block needed strictly for this logic, but chain starts empty
-    }
 
     /**
      * Creates and records a new transaction.
@@ -107,5 +119,14 @@ public class Blockchain {
             }
         }
         return true;
+    }
+
+    /**
+     * Clears the ledger data.
+     * Essential for restarting simulation without restarting JVM.
+     */
+    public void reset() {
+        this.chain.clear();
+        System.out.println("[Blockchain] Ledger cleared.");
     }
 }

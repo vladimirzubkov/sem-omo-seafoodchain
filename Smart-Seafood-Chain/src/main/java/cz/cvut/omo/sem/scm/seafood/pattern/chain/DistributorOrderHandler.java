@@ -7,18 +7,13 @@ public class DistributorOrderHandler extends OrderHandler {
 
     @Override
     public void handleOrder(Party buyer, String itemType, double amount, Money maxPrice) {
-        // Logic: Check if distributor has stock (Mock implementation)
-        boolean hasStock = false;
+        // Logic: Distributors usually act as middlemen.
+        // They might check their stock (StockHandler logic) or just route requests.
 
-        if (hasStock) {
-            System.out.println("[CHAIN] Distributor accepting order for %.2f kg of %s".formatted(
-                    amount, itemType));
-            // Trigger Sales Transaction here...
-        } else if (nextHandler != null) {
-            System.out.println("[CHAIN] Distributor passing order for %s up the chain...".formatted(itemType));
-            nextHandler.handleOrder(buyer, itemType, amount, maxPrice);
-        } else {
-            System.out.println("[CHAIN] Order failed: No provider found for %s".formatted(itemType));
-        }
+        System.out.println("[CHAIN] Distributor routing order for %s...".formatted(itemType));
+
+        // Distributors usually take a cut (markup), so they pass a lower "maxPrice" upstream
+        // to make profit, but here we keep it simple.
+        passToNext(buyer, itemType, amount, maxPrice);
     }
 }

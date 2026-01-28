@@ -4,7 +4,8 @@ public enum Currency {
     CZK("Kč"),
     EUR("€"),
     USD("$"),
-    NOK("kr");
+    NOK("kr"),
+    RUB("₽");
 
     private final String symbol;
 

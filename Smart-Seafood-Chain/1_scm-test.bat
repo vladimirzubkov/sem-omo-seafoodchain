@@ -1,1 +1,2 @@
 java -jar target/smart-seafood-chain.jar scm-test.yaml
+pause

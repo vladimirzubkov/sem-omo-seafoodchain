@@ -1,0 +1,67 @@
+@startuml Pattern Prototype Memento
+autonumber
+title Sequence: Memento & Prototype Interaction (Save/Restore)
+
+actor Client
+participant "SimulationController\n(Originator)" as Ctrl
+participant "Caretaker" as Caretaker
+participant "Party\n(Entity/Prototype)" as Entity
+participant "SimulationMemento\n(Memento)" as Memento
+
+== 1. Save Checkpoint (Creating Memento) ==
+
+Client -> Ctrl: saveCheckpoint()
+activate Ctrl
+    
+    Ctrl -> Ctrl: Create empty list for snapshot
+    
+    loop for each entity
+        Ctrl -> Entity: clone()
+        activate Entity
+            note right: <b>PROTOTYPE Pattern</b>\nDeep Copy: \n1. Clone object \n2. Clone internal lists (Inventory)
+            Entity -> Entity: clone() attributes
+            Entity --> Ctrl: deepCopy
+        deactivate Entity
+        Ctrl -> Ctrl: add(deepCopy)
+    end
+
+    Ctrl -> Memento: new SimulationMemento(tick, time, deepCopies)
+    activate Memento
+    Memento --> Ctrl
+    deactivate Memento
+
+    Ctrl -> Caretaker: save(memento)
+    activate Caretaker
+    deactivate Caretaker
+
+    note left: <b>MEMENTO Pattern</b>\nState is externalized\nbut encapsulated
+    
+    Ctrl --> Client
+deactivate Ctrl
+
+== ... Simulation runs (State changes) ... ==
+
+== 2. Restore Checkpoint (Undo) ==
+
+Client -> Ctrl: restoreCheckpoint()
+activate Ctrl
+
+    Ctrl -> Caretaker: undo()
+    activate Caretaker
+        Caretaker --> Ctrl: memento
+    deactivate Caretaker
+
+    alt memento not null
+        Ctrl -> Memento: entitiesSnapshot()
+        activate Memento
+        Memento --> Ctrl: savedList
+        deactivate Memento
+        
+        Ctrl -> Ctrl: this.entities = savedList
+        note right: State restored to exact copy\nfrom the past
+    end
+
+    Ctrl --> Client
+deactivate Ctrl
+
+@enduml

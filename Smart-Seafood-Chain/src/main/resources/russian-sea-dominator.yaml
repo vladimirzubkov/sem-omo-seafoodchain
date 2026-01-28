@@ -1,5 +1,6 @@
+# src/main/resources/russian-sea-dominator.yaml
 simulation:
-  maxTicks: 720  # full month of non-stop operation
+  maxTicks: 720
 
 company:
   name: "Russian Sea Dominator JSC"
@@ -19,23 +20,27 @@ seaRegions:
     fishTypes: ["Polar Cod", "Arctic Char", "King Crab"]
 
 parties:
+  # --- RUSSIA (RUB) ---
   - type: Fisher
     id: fisher-murmansk1
     name: "Trawler Sever-1"
     balance: "180000000 RUB"
-    fishingZone: "Barents Sea"
+    fishingZones:
+      - "Barents Sea"
 
   - type: Fisher
     id: fisher-murmansk2
     name: "Trawler Sever-2"
     balance: "175000000 RUB"
-    fishingZone: "Barents Sea"
+    fishingZones:
+      - "Barents Sea"
 
   - type: Fisher
     id: fisher-kara
     name: "Ice-Class Fisher Kara Dominator"
     balance: "280000000 RUB"
-    fishingZone: "Kara Sea"
+    fishingZones:
+      - "Kara Sea"
 
   - type: Processor
     id: proc-murmansk
@@ -46,11 +51,6 @@ parties:
     id: wh-murmansk-giant
     name: "Arctic Deep Freeze Complex"
     balance: "800000000 RUB"
-
-  - type: Warehouse
-    id: wh-prague-hub
-    name: "Prague Transit Hub"
-    balance: "450000000 RUB"
 
   - type: Distributor
     id: dist-russia-eu
@@ -65,19 +65,26 @@ parties:
     supportsDelivery: true
     suppliesSupermarkets: false
 
-  - type: Kitchen
-    id: rest-prague
-    name: "Prague Russian Seafood Palace"
-    balance: "520000000 RUB"
-    acceptsDineIn: true
-    supportsDelivery: false
-    suppliesSupermarkets: true
-
   - type: Customer
     id: cust-oligarch
     name: "Oligarch Ivan Petrovich"
     balance: "100000000 RUB"
 
+  # --- CZECHIA (CZK) ---
+  - type: Warehouse
+    id: wh-prague-hub
+    name: "Prague Transit Hub"
+    balance: "150000000 CZK"
+
+  - type: Kitchen
+    id: rest-prague
+    name: "Prague Russian Seafood Palace"
+    balance: "20000000 CZK"
+    acceptsDineIn: true
+    supportsDelivery: false
+    suppliesSupermarkets: true
+
+  # --- STAFF ---
   - type: Cook
     id: cook-vladimir
     name: "Master Chef Vladimir"
@@ -98,52 +105,82 @@ parties:
     id: tech-prague
     name: "Technician Yuri"
 
+  - type: RepairTechnician
+    id: tech-moscow
+    name: "Technician Anatoly"
+
   - type: SCMManager
     id: scm-director
-    name: "Supply Chain Tsar Mikhail"
+    name: "Supply Chain Director Mikhail"
 
   - type: Inspector
     id: inspector-fsb
     name: "Federal Inspector Natalia"
 
 devices:
+  # --- MURMANSK DEVICES ---
   - type: IndustrialFreezer
     id: freezer-arctic1
     energyPerHour: 25.0
     maintenanceCost: "1200000 RUB"
 
-  - type: IndustrialFreezer
-    id: freezer-arctic2
-    energyPerHour: 25.0
-    maintenanceCost: "1200000 RUB"
-
-  - type: HighSpeedFilletLine
+  - type: FoodProcessingRobot
     id: fillet-line1
     energyPerHour: 18.0
     maintenanceCost: "1800000 RUB"
+    capabilities:
+      - "FILLETING"
 
-  - type: PackingRobot
+  - type: PackagingMachine
     id: pack-robot1
     energyPerHour: 12.0
     maintenanceCost: "1500000 RUB"
+    speed: 500
 
-  - type: SushiRobotPremium
+  # --- MOSCOW DEVICES ---
+  - type: FoodProcessingRobot
     id: sushi-robot-moscow
     energyPerHour: 6.5
     maintenanceCost: "3000000 RUB"
+    capabilities:
+      - "COOKING"
+      - "MIXING"
+      - "CHOPPING"
+
+  # --- PRAGUE DEVICES ---
+  - type: Refrigerator
+    id: ref-prague
+    energyPerHour: 15.0
+    maintenanceCost: "2500 CZK"
+
+  - type: FoodProcessingRobot
+    id: oven-prague
+    energyPerHour: 5.0
+    maintenanceCost: "8000 CZK"
+    capabilities:
+      - "COOKING"
 
 productionLines:
   - name: "Mass Frozen Cod Production"
+    ownerId: "proc-murmansk"
     devices: ["fillet-line1", "freezer-arctic1", "pack-robot1"]
     cooks: []
     technicians: ["tech-murmansk1", "tech-murmansk2"]
 
-  - name: "Premium Sushi & Caviar Line"
-    devices: ["sushi-robot-moscow", "freezer-arctic2"]
-    cooks: ["cook-vladimir", "cook-sergei"]
-    technicians: ["tech-prague"]
-
   - name: "King Crab & Luxury Export Line"
+    ownerId: "proc-murmansk"
     devices: ["freezer-arctic1", "pack-robot1"]
     cooks: []
     technicians: ["tech-murmansk1"]
+
+  - name: "Moscow Sushi Production"
+    ownerId: "rest-moscow"
+    devices: ["sushi-robot-moscow"]
+    cooks: ["cook-vladimir"]
+    technicians: ["tech-moscow"]
+
+  - name: "Prague Fresh Line"
+    ownerId: "rest-prague"
+    devices: ["oven-prague", "ref-prague"]
+    cooks: ["cook-sergei"]
+    technicians: ["tech-prague"]

@@ -1,0 +1,38 @@
+@startuml Pattern Observer classic
+autonumber
+title Pattern: Observer (Classic)
+
+actor Client
+participant "NewsAgency\n(Subject)" as Subject
+participant "Alice\n(Observer)" as Observer1
+participant "Bob\n(Observer)" as Observer2
+
+== 1. Subscribe ==
+Client -> Subject: attach(Alice)
+Client -> Subject: attach(Bob)
+
+== 2. Event (State Change) ==
+Client -> Subject: setNews("Java is cool!")
+activate Subject
+
+    Subject -> Subject: notifyObservers()
+    
+    loop for each observer
+        Subject -> Observer1: update("Java is cool!")
+        activate Observer1
+        Observer1 --[#blue]> Subject
+        deactivate Observer1
+        
+        Subject -> Observer2: update("Java is cool!")
+        activate Observer2
+        Observer2 --[#blue]> Subject
+        deactivate Observer2
+    end
+
+deactivate Subject
+
+== 3. Unsubscribe ==
+Client -> Subject: detach(Alice)
+note right: Alice removed from list,\nbut object still alive in Client memory!
+
+@enduml

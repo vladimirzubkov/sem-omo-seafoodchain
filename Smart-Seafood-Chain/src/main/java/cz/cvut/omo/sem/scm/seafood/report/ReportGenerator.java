@@ -3,7 +3,6 @@ package cz.cvut.omo.sem.scm.seafood.report;
 import cz.cvut.omo.sem.scm.seafood.event.Event;
 import cz.cvut.omo.sem.scm.seafood.model.party.Party;
 // Ensure we use the Visitor implementation from THIS package
-import cz.cvut.omo.sem.scm.seafood.report.FoodChainReport;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -34,7 +33,27 @@ public class ReportGenerator {
         sb.append("Generated at: %s\n\n".formatted(LocalDateTime.now()));
 
         for (Event e : history) {
-            sb.append("[%s] %s | %s\n".formatted(e.timestamp(), e.type(), e.description()));
+            // Truncate timestamp to 23 chars (approx 5 decimal places for seconds)
+            String timeStr = e.timestamp().toString();
+            if (timeStr.length() > 23) {
+                timeStr = timeStr.substring(0, 23);
+            }
+
+            // Determine semantic tag based on EventType
+            String tag = switch (e.type()) {
+                case ITEM_CAUGHT -> "[PRODUCER]";
+                case DELIVERY_ARRIVED -> "[IMPORTER]";
+                case ITEM_PROCESSED, ITEM_COOKED, ITEM_PACKAGED -> "[PROCESSOR]";
+                case TRANSACTION_COMPLETED, ORDER_PLACED -> "[MERCHANT]";
+                case ITEM_SOLD -> "[CUSTOMER]";
+                case SHIFT_STARTED, SHIFT_ENDED, MAINTENANCE_PERFORMED, DEVICE_REPAIR_STARTED, DEVICE_REPAIRED ->
+                    "[WORKER]";
+                case DEVICE_BREAKDOWN -> "[DEVICE]";
+                case SECURITY_BREACH, DOUBLE_SPENDING_DETECTED, BLOCKCHAIN_TAMPERING_DETECTED -> "[SECURITY]";
+                default -> "[LOG]";
+            };
+
+            sb.append("[%s] %-12s %s | %s\n".formatted(timeStr, tag, e.type(), e.description()));
         }
 
         writeReport("EventLog", sb.toString());
@@ -50,7 +69,7 @@ public class ReportGenerator {
         sb.append("Generated at: %s\n\n".formatted(LocalDateTime.now()));
 
         // Instantiate the Visitor
-        FoodChainReport visitor = new FoodChainReport();
+        FoodChainSnapshot visitor = new FoodChainSnapshot();
 
         // Visit each party
         for (Party party : parties) {
@@ -67,7 +86,7 @@ public class ReportGenerator {
         writeReport("StateReport", sb.toString());
     }
 
-    private static void writeReport(String fileName, String content) {
+    public static void writeReport(String fileName, String content) {
         String timestampedName = "%s_%s.txt".formatted(LocalDateTime.now().format(FMT), fileName);
         try {
             Files.writeString(Paths.get(REPORT_DIR, timestampedName), content,

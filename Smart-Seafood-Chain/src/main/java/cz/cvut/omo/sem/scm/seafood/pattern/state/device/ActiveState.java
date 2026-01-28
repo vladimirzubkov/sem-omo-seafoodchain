@@ -3,19 +3,18 @@ package cz.cvut.omo.sem.scm.seafood.pattern.state.device;
 import cz.cvut.omo.sem.scm.seafood.model.device.Device;
 import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
 
-/**
- * Normal operational state.
- * Device consumes energy, wears out, and does work.
- */
 public class ActiveState implements DeviceState {
 
     @Override
     public void onTick(Device context) {
-        // 1. Consume Energy
-        // context.consumeEnergy(...);
+        // 1. Consume Energy - Unleash the bills!
+        context.consumeEnergy();
+
+        // 2. Update Sensors (Physics & IoT Check)
+        context.updateSensors();
 
         // 2. Increase Wear
-        double wear = context.getWearLevel() + 0.05; // Stub increment
+        double wear = context.getWearLevel() + 0.05;
         context.setWearLevel(wear);
 
         // 3. Check for automatic failure
@@ -26,17 +25,13 @@ public class ActiveState implements DeviceState {
 
     @Override
     public void onFailure(Device context) {
-        System.out.println("DEVICE FAILED: %s".formatted(context.getName()));
-        // Switch to Broken State
+        System.out.println("DEVICE FAILED: %s (Wear limit)".formatted(context.getName()));
         context.setState(new BrokenState());
-
-        // Context should fire event
-        // context.fireEvent(EventType.DEVICE_BREAKDOWN);
+        context.fireEvent(EventType.DEVICE_BREAKDOWN, "Critical wear level reached.");
     }
 
     @Override
     public void onRepair(Device context) {
-        // Cannot repair if not broken (or maybe maintenance?)
         System.out.println("Device is running fine, no repair needed.");
     }
 

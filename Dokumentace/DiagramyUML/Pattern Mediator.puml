@@ -1,0 +1,31 @@
+@startuml Pattern Mediator
+autonumber
+title Pattern: Mediator
+
+participant "Alice\n(Colleague)" as Alice
+participant "ChatRoom\n(Mediator)" as Mediator
+participant "Bob\n(Colleague)" as Bob
+participant "Charlie\n(Colleague)" as Charlie
+
+== Communication via Hub ==
+
+Alice -> Mediator: send("Hello everyone!")
+activate Mediator
+
+    note right of Mediator
+        <b>Routing Business Logic:</b>
+        if (user != sender) { send }
+    end note
+
+    Mediator -> Mediator: Find all recipients
+
+    par Broadcast (parallel or sequential)
+        Mediator -> Bob: receive("Hello everyone!")
+        Mediator -> Charlie: receive("Hello everyone!")
+    end
+    
+    Mediator -[#red]x Alice: (Skip sender)
+
+deactivate Mediator
+
+@enduml

@@ -1,0 +1,63 @@
+@startuml Pattern Visitor sequential
+title World Setup via Visitor (Double Dispatch)
+autonumber
+
+participant "Simulator" as Sim
+participant "WorldSetupVisitor" as Visitor
+participant "Party\n(Visitable)" as Party
+participant "Device\n(Visitable)" as Device
+
+' 1. Creation
+note over Sim, Visitor
+  Visitor is created with dependencies
+  (EventBus, Blockchain)
+end note
+Sim -> Visitor: <<create>>
+
+' --- Processing Party ---
+group Double Dispatch (Party)
+    ' 1. Dispatch 1: Accept called on generic interface/parent
+    Sim -> Party: accept(visitor)
+    activate Party
+    
+    ' 2. Dispatch 2: Specific visit method called with 'this'
+    Party -> Visitor: visit(this: Party)
+    activate Visitor
+    
+    ' 3. Logic execution
+    Visitor -> Party: setEventBus(bus)
+    Visitor -> Party: setBlockchain(chain)
+    
+    Visitor --> Party
+    deactivate Visitor
+    
+    Party --> Sim
+    deactivate Party
+end
+
+' --- Processing Device ---
+group Double Dispatch (Device)
+    ' 1. Dispatch 1
+    Sim -> Device: accept(visitor)
+    activate Device
+    
+    ' 2. Dispatch 2
+    Device -> Visitor: visit(this: Device)
+    activate Visitor
+    
+    ' 3. Logic execution (Different logic for Device!)
+    Visitor -> Device: setEventBus(bus)
+    note right
+       Devices need EventBus for 
+       reporting breakdowns, 
+       but don't need Blockchain.
+    end note
+    
+    Visitor --> Device
+    deactivate Visitor
+    
+    Device --> Sim
+    deactivate Device
+end
+
+@enduml

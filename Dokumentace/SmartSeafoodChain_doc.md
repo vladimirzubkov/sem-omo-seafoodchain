@@ -1,6 +1,6 @@
-# B6B36OMO — Objektový návrh a modelování, <br>SW2 Smart Seafood Chain, 1. prosince 2025
+# 	B6B36OMO — Objektový návrh a modelování, <br>SW3 Smart Seafood Chain, 28. ledna 2026
 
-URL: https://gitlab.fel.cvut.cz/B251_B6B36OMO/zubkovla/-/tree/SW2
+URL: https://gitlab.fel.cvut.cz/B251_B6B36OMO/zubkovla/-/tree/SW3
 
 ## Vysokoúrovňové požadavky (High–level requirements)
 
@@ -157,125 +157,349 @@ Tyto požadavky detailně rozpracovávají vysokoúrovňové funkční požadavk
 
 <div style="page-break-after: always;"></div>
 
-## Návrhové vzory (Patterns)
+## Realizace
+
+V rámci realizace byla implementována flexibilní strategie načítání dat, která podporuje jak načítání předdefinovaných konfigurací ve formátu `yaml` z classpath (adresář `resources` projektu nebo přímo `JAR` soubor), anebo ze souborů `yaml` dodaných uživatelem.
+
+Deserializace dat se provádí prostřednictvím knihovny `Jackson` následovně:
+
++ `ObjectMapper` používá instanci `YAMLFactory`, umožňující parsování YAML syntaxe.
++ Po načtení obsahu souboru `ObjectMapper` mapuje jej na strukturu třídy `Configuration.java`.
++ `Configuration.java` obsahuje statické třídy sloužící jako DTO a mají funkci kontejnerů pro nastavení jednotlivých tříd (`PartyConfig`, `DeviceConfig` atd.). Anotace `@Data` knihovny `Lombok` poskytují přístupové metody (gettery a settery), které Jackson používá pro zápis hodnot do jednotlivých objektů. 
+
+### Kroky načítání dat
+
+`YamlConfigLoader` postupuje v těchto krocích:
+
+1. **Resources:** aplikace hledá soubor v interních zdrojích (classpath/JAR).
+
+2. **Filesystem:** Pokud není nalezen, hledá jej jako externí soubor na disku (lze používat bez rekompilace).
+
+3. **Fallback:** Pokud selže i to, automaticky se vygeneruje minimální nouzová konfigurace, aby aplikace nehavarovala.
+
+Následně jednotlivé konfigurační soubory se použijí v Simulaci:
+
+### Inicializace a běh simulace
+
+Centrální řídicí prvek aplikace je třída `SimulationController.java`, který orchestruje celou simulaci. Můžeme říct, že se jedná o jakousi *fasádu* systému, protože načítá všechny jeho prvky: abstraktní entitu `SimulationEntity`, od niž se odvozují všechny entity modelu (vkládají se do seznamu), soubor konfigurace popsány výše, a speciality: sběrnice událostí (`EventBus`), logování (`EventLogger`) a blockchain (`Blockchain`). 
+
+Simulace rovněž plní i funkci *controlleru* - používá globální třídu `Time` k běhu aplikace.
+
+***Poznámky:*** recepty obsahují názvy ryb. Je potřeba sledovat aby používané zpracovatelem recepty měly ty druhé ryb, které přísluší jejich mořské oblasti (revíru), jinak report zpracovatele FactoryConsumptionReport bude prázdný - mořské plody minou zpracovatele a půjdou v dodavatelském řetězci přímo do prodeje. 
+
+V kódu se hojně používají "chytré" výčtové typy s logikou. Ukázka sekvenčního diagramu je v adresáři projektu na gitlabu [Dokumentace/DiagramyUML/plantuml-output/SmartEnums sequential.png](Dokumentace/DiagramyUML/plantuml-output/SmartEnums sequential.png)
+
+Aplikace má předefinovaná v classpathu nastavení logistických řetězců, dle časové délky cyklu a prostorového rozsahu, od nejmenšího po největší: 
+scm-test.yaml (5 hodin), prague-sushi-luxury.yaml (3 dny), nordic-fresh.yaml (týden), baltic-frozen.yaml (dva týdny), russian-sea-dominator.yaml (měsíc).
+Základní simulační jednotkou je 1 hodina, definována jako 60 minut.
+
+Aplikace může být spuštěna s vlastními nastaveními příkazem: `java -jar target/smart-seafood-chain.jar edge-case.yaml` Byl vytvořen konfigurační soubor `edge-case.yaml`, který testuje hraniční podmínky, jako je oblast s minimálním výlovem ("Dead Sea") či krachující rybář. Konfigurace také obsahuje záměrně poruchové mrazicí zařízení s extrémní spotřebou a neznámé druhy ryb ("GoldFish") pro ověření chování systému v nestandardních situacích.
+
+Délka přehrávání simulace se nastavuje v parametru `tickDelayMs` v souboru `SimulationConfig`, výchozí nastavení je 1 vteřina, 0 - nejrychlejší varianta.
+
+### Reporty:
+
+Po běhu systému se generují reporty:
+
+Systém:
+* **`EventLog`** - chronologický záznam úplně všech událostí v simulaci, který slouží jako „černá skříňka“ systému pro detailní zpětnou analýzu. 
+  *Pro* vývojáře (ladění) a forenzní auditory. Jinými slovy, SecurityReport může hlásit, že systém je ok, ale v EventLogu bude vidět útok na systém a rollback.
+* **`StateReport`** - zobrazuje aktuální stav zásob všech účastníků v reálném čase a potvrzuje celkovou validitu celého blockchainu. V podstatě se ukládá na konci, a proto ukazuje stav na účastníků na konci simulace. *Pro* skladové manažery a auditory blockchainu.
+
+Reporting:
+
+* **`SecurityReport`** - vyhodnocuje bezpečnostní incidenty a integritu dat po detekci útoků a následné obnově stavu světa (pattern Memento). 
+  V podstatě vždy ukazuje Ok. 
+  *Pro* bezpečnostní analytiky a správce systému.
+
+
+* **`FoodChainHistoryReport`** - poskytuje kompletní historii životního cyklu produktu – od okamžiku ulovení ryby až po její prodej koncovému zákazníkovi. *Pro* zákazníky (ověření původu) a auditory (Traceability, Sledovatelnost).
+* **`FactoryConsumptionReport`** - detailně analyzuje produkci: který pracovník co vyrobil, podle jakého receptu a s jakou efektivitou (KPI). *Pro* manažery výroby a procesní inženýry. Pozor na recepty, musí obsahovat příslušné ve výlovu ryby, jinak nic nebude zpracováno - vše bude prodáno.
+* **`OutagesReport`** - eviduje spolehlivost IoT zařízení, záznamy o jejich poruchách v důsledku opotřebení a historii provedených oprav. *Pro* oddělení údržby a technickou správu facility.
+* **`PartiesReport`** - žebříček nejaktivnějších subjektů v řetězci na základě počtu vygenerovaných událostí (vytížení uzlů). *Pro* Supply Chain Management k identifikaci klíčových partnerů.
+* **`TransactionReport`** - sumarizuje veškeré obchodní transakce, pohyby peněz a celkový finanční obrat v rámci celého systému. *Pro* finanční oddělení a obchodní ředitele.
+
+---
+
+## Implementace
+
+### Návrhové vzory (Patterns)
 
 Poznámky k jednotlivým návrhovým vzorům.
 
-### 1\. Observer (Publish-Subscribe)
-
-<div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Observer.png"> </div>
-
-**Účel:** Zajišťuje komunikaci mezi entitami, ale používá k tomu EventBus.
-**Použití:** Třída `EventBus` funguje jako centrální uzel. Zařízení (`Device`) a lidé (`Employee`) publikují události (např. porucha, dokončení směny), na které reagují ostatní komponenty (např. `EventLogger`, `Inspector`).
-
-<div style="clear: both;"></div>
-
-### 2\. Strategy
-
-<div style="float: right; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern Strategy.png"> </div>
-
-**Účel:** Umožňuje dynamickou změnu chování objektu kompozicí místo dědičnosti. Navazuje na SOLID, a zejména 'Interface Segregation Principle' v návaznosti na 'Separation of Concerns' a 'Liskov's Substitution Principle'. Třídy by totiž neměli implementovat metody které nepoužívají, proto jejích funkcionalita je jim zapůjčena zvenčí přes zástupnou proceduru. Výhodou je to, že funkcionalitu lze granulárně kombinovat.
-**Použití:** Niveluje "kombinatorickou explozi" dědičnosti.
-
-  * `BusinessRole` určuje chování organizace (Rybář vs. Prodejce).
-  * `JobRole` určuje práci zaměstnance (Řidič vs. Manažer).
-  * `EnergySource` určuje spotřebu vozidla (Spalovací motor vs. Elektro).
-
-<div style="clear: both;"></div>
-
-<div style="page-break-after: always;"></div>
-
-### 3\. Composite
-
-<div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Composite.png"> </div>
-
-**Účel:** Umožňuje zacházet s jednotlivými objekty a jejich skupinami stejně.
-**Použití:** Hierarchie předmětů (`Item`). Třída `PackageContainer` (krabice, paleta) může obsahovat jiné `Item` (ryby nebo další krabice). Metody jako `recordTemperature()` se rekurzivně volají na celý obsah.
-
-<div style="clear: both;"></div>
-
-### 4\. State
-
-<div style="float: right; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern State.png"> </div>
-
-**Účel:** Umožňuje objektu měnit chování při změně vnitřního stavu.
-**Použití:**
-
-1.  **Device Lifecycle:** `Device` deleguje logiku na stavy `Active`, `Broken`, `Repairing` . Vrací `DeviceState`
-2.  **Item Lifecycle:** `Item` mění chování degradace kvality podle stavů `Caught`, `Stored`, `Processed`, `Sold`. Vrací `void`, mění navazuje na další stav uvnitř třídy stavu, dle GoF.
-
-<div style="clear: both;"></div>
-
-<div style="page-break-after: always;"></div>
-
-### 5\. Abstract Factory
+#### 1. Abstract Factory
 
 <div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Abstract Factory.png"> </div>
 
 **Účel:** Poskytuje rozhraní pro vytváření rodin souvisejících objektů bez specifikace jejich konkrétních tříd.
-**Použití:** Třída `SeafoodEntityFactory` zapouzdřuje složitou logiku parsování konfigurace a vytváření propojených objektů (`Party`, `Employee`, `Device`), čímž odděluje `Simulator` od detailů inicializace.
+
+**Použití v projektu:** odděluje logiku načítání a instanciace doménového modelu od samotného běhu simulace.
 
 <div style="clear: both;"></div>
 
-### 6\. Builder
+1. **Abstraktní továrna (`EntityFactory`):** 
+definuje kontrakt metody `createEntities(Configuration config)`. Třída `Simulator` (klient) závisí pouze na této abstrakci.
+2. **Konkrétní továrna (`SeafoodEntityFactory`):** 
+implementuje logiku pro doménu "Seafood". Zpracovává DTO objekty z konfigurace (`PartyConfig`, `DeviceConfig`) a převádí je na živé entity (`Fisher`, `ProcessingPlant`, `IndustrialFreezer`). Zapouzdřuje složitá pravidla tvorby (např. přiřazování strategií/rolí `BusinessRole` jednotlivým stranám).
+3. **Výhoda:** lze přídat jinou fabriku bez změny kódu simulatoru.
+
+---
+
+#### 2. Strategy
+
+<div style="float: right; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern Strategy.png"> </div>
+
+**Účel:** Umožňuje dynamickou změnu chování objektu kompozicí místo dědičnosti. Navazuje na SOLID, a zejména 'Interface Segregation Principle' v návaznosti na 'Separation of Concerns' a 'Liskov's Substitution Principle'. Třídy by totiž neměli implementovat metody které nepoužívají, proto jejích funkcionalita je jim zapůjčena zvenčí přes zástupnou proceduru. Výhodou je to, že funkcionalitu lze granulárně kombinovat.
+
+**Použití:** nivelujeme "kombinatorickou explozi" dědičnosti, například:
+
+  * `BusinessRole` určuje chování organizace (Rybář, Prodejce).
+  * `JobRole` určuje práci zaměstnance (Řidič, Manažer).
+  * `EnergySource` určuje spotřebu vozidla (Spalovací motor vs. Elektro).
+
+<div style="clear: both;"></div>
+
+Používá se přes přidání rolí do seznamu v instanci, např.: 
+
+```java
+public void addRole(BusinessRole role) {
+    this.roles.add(role);
+}
+```
+
+U rolí stran a pracovníků se používá ***agregace*** (list rolí lze měnit a jsou si navzájem nezávislé). Role zdrojů energii používají ***kompozici*** a injektují se do konstruktorů příslušných pohaněných vozů. (Pozn.: ne do konstruktéru).
+
+<div style="page-break-after: always;"></div>
+---
+
+#### 3. State
+
+<div style="float: left; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern State.png"> </div>
+
+**Účel:** Formalizuje koncept konečného automatu (Finite State Machine) v objektovém návrhu. Umožňuje objektu (Context) radikálně měnit své chování v závislosti na vnitřním stavu, což se navenek projevuje jako změna třídy. Vzor eliminuje neudržovatelné monolitické podmíněné větvení (`switch-case`) tím, že zapouzdřuje stavově závislou logiku do samostatných tříd. Tím zvyšuje soudržnost (cohesion) a dodržuje Open/Closed Principle – nové stavy lze přidávat bez modifikace kontextu.
+
+<div style="clear: both;"></div>
+**Použití:** v projektu tento vzor řídí dynamické chování entit, kde reakce na události (tik simulace, změna teploty) závisí na aktuální fázi životního cyklu:
+
+1.  **Device Lifecycle:** třída `Device` tvoří kontext, který deleguje volání na právě aktivní instanci `DeviceState` (`Active`). V tomto stavu stroj spotřebovává energii, opotřebovává se, rovněž se v něm aktivně monitorují parametry stroje, a při překročení prahových hodnot stav sám iniciuje přechod do jiného stavu (`Broken`), `Repairing` (resetuje se opotřebení). Vrací `DeviceState`.
+2.  **Item Lifecycle:** `Item` mění chování degradace kvality podle stavů `Caught`, `Stored`, `Processed`, `Sold`. Vrací `void`, mění navazuje na další stav uvnitř třídy stavu, dle GoF.
+
+Zde je příklad sekvenčního diagramu stavů strojů:
+
+![State sequence diagram](DiagramyUML/plantuml-output/Pattern State sequential.png)
+
+<div style="page-break-after: always;"></div>
+---
+
+#### 4. Visitor
+
+<div style="float: right; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Visitor.png"> </div>
+
+**Účel:** Umožňuje přidávat nové operace nad objektovou strukturou bez nutnosti měnit třídy elementů, na kterých operace pracují. Umožňuje realizaci tzv. **Double Dispatch** v Javě. 
+Odděluje algoritmus (např. generování reportu) od datové struktury (Device, Party, Employee) be její změny.
+
+<div style="clear: both;"></div>
+
+**Použití:** v projektu se používá k auditu, reportování a injektování závislostí. Místo různých metod typu `printReport()`, `calculateTotalEnergy()` nebo `setDependencies()` v každé odpovídající třídě, třídy implementují pouze jednoduchou metodu `accept()`.
+
+Konkrétní návštěvníci v systému:
+
+- **WorldSetupVisitor:** prochází vygenerované entity a injektuje do nich závislosti (např. `EventBus`, `Blockchain`), které nebyly dostupné v době vytvoření v továrně.
+
+- **ConsumptionVisitor:** agreguje `totalEnergyConsumed` ze všech zařízení napříč firmami a vypočítává celkovou energetickou náročnost simulace.
+
+- **InspectorVisitor:** simuluje externí inspekci kvality. Obsahuje logiku kontroly pro různé typy entit (např. zda má `Device` v pořádku revize nebo `Employee` platné certifikáty), aniž by tato logika "znečišťovala" doménové modely.
+
+Role Inspektora (`InspectionRole`): třída `InspectorVisitor` obsahuje logiku kontroly pro různé typy entit (`Device`, `Party`, `Employee`), aniž by tato logika znečišťovala modely.
+
+Zde je příklad sekvenčního diagramu pro injektování závislostí:
+
+![State sequence diagram](DiagramyUML/plantuml-output/Pattern Visitor sequential.png)
+
+---
+
+#### 5. Chain of Responsibility
+
+<div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Chain.png"> </div>
+
+**Účel:** Zamezuje pevné vazbě mezi odesílatelem požadavku a jeho příjemcem tím, že dává více objektům šanci požadavek vyřídit. Požadavek prochází řetězcem objektů, dokud jej jeden z nich nezpracuje.
+
+**Použití:** Zpracování poptávky (`OrderHandler`). Pokud obchodník nemá zboží na skladě (`MerchantOrderHandler`), předá požadavek svému dodavateli nebo výrobě (`ProductionOrderHandler`). Implementuje "Pull" logiku řetězce.
+
+<div style="clear: both;"></div>
+
+Konkrétní články řetězce:
+
+1. **StockHandler:** Nejprve zkontroluje lokální sklad (`Inventory`). Pokud je zboží dostupné, objednávku vyřídí okamžitě.
+2. **DistributorOrderHandler:** Pokud zboží není na skladě, požadavek se předá distributorovi, který hledá dodavatele v jiných regionech.
+3. **FisherOrderHandler:** Konec řetězce. Pokud zboží nikdo nemá, požadavek doputuje k výrobci (rybáři), což vyvolá událost `DEMAND_CREATED` (nová poptávka po lovu).
+
+**Architektonické rozhodnutí:** Pro implementaci byla zvolena **abstraktní třída** (`abstract class OrderHandler`) místo rozhraní. To umožňuje definovat logiku předávání (`nextHandler`, `passToNext`) na jednom místě a dodržet princip **DRY** (Don't Repeat Yourself), čímž se eliminuje duplicitní kód v jednotlivých handlerech.
+
+<div style="page-break-after: always;"></div>
+
+---
+
+#### 6. Builder
 
 <div style="float: right; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern Builder.png"> </div>
 
-**Účel:** Odděluje konstrukci složitého objektu od jeho reprezentace.
-**Použití:** V našem případě třída `EventBuilder` slouží k vytváření neměnných (immutable) objektů `Event`. Zajišťuje čitelnost kódu pomoci tzv. plynulého rozhrání (fluent interface) a kaskádovému volání metod (method chaining); validace použitých a povinných polí je prováděná na konci, před vytvořením instance, voláním metody `build()`.
+**Účel:** Odděluje konstrukci složitého objektu od jeho reprezentace. Může být realizován klasický (s tzv. Directorem), který získává objednávku a vrací kompletní immutable objekt, anebo poskytovat tzv. fluent rozhrání - možnost přidávat vlastnosti postupně uživatelem, ať už idempotentně, či opakovaně. Samotná instanciace probíhá v závěrečném kroku.
+
+**Použití:** V našem případě třída `EventBuilder` slouží k vytváření neměnných (immutable) objektů `Event`. Zajišťuje čitelnost kódu pomocí plynulého rozhrání (fluent interface) a kaskádovému volání metod (method chaining); validace použitých a povinných polí je prováděná na konci, před vytvořením instance, voláním metody `build()` se vrací neměnitelný objekt typu `Event` (neměnitelný, protože je `record`) .
+
+V projektu je rovněž využit automatizovaný Builder pomocí anotace `@Builder` z knihovny Lombok u třídy `Transaction`, pro šetření místa. 
 
 <div style="clear: both;"></div>
 
-Poznámka: potřeba provádět kontrolu 'Object' při přetypování (if instanceOf, zamezení chybám, graceful failure).
+**<u>Poznámka:</u>** Flexibilita Builderu umožňuje vložení libovolného objektu. Typová bezpečnost je proto vynucena až na straně příjemce (runtime check), kde je nutné ošetřit nekompatibilní typy dat (prevence `ClassCastException`). V praxi to znamená, že je potřeba provádět kontrolu 'Object' při přetypování (if `instanceof`, zamezení chybám, graceful failure) při zpracování události (event processing).
 
 <div style="page-break-after: always;"></div>
 
-### 7\. Visitor
+---
 
-<div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Visitor.png"> </div>
+#### 7. Observer (Publish-Subscribe)
 
-**Účel:** Umožňuje přidat nové operace do stávající struktury tříd bez jejich změny.
-**Použití:** Role Inspektora (`InspectionRole`). Třída `InspectorVisitor` obsahuje logiku kontroly pro různé typy entit (`Device`, `Party`, `Employee`), aniž by tato logika znečišťovala modely.
+<div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Observer.png"> </div>
+
+**Účel:** Definuje závislost typu „jeden k mnoha“ mezi objekty tak, že změna stavu jednoho objektu vyvolá automatickou notifikaci a aktualizaci všech závislých objektů.
 
 <div style="clear: both;"></div>
 
-### 8\. Chain of Responsibility
+**Použití:** třída `EventBus` funguje jako centrální uzel. Zařízení (`Device`) a lidé (`Employee`) publikují události (např. porucha, dokončení směny), na které reagují ostatní komponenty (např. `EventLogger`, `Inspector`).
 
-**Účel:** Předává požadavek řetězcem potenciálních zpracovatelů.
-**Použití:** Zpracování poptávky (`OrderHandler`). Pokud obchodník nemá zboží na skladě (`MerchantOrderHandler`), předá požadavek svému dodavateli nebo výrobě (`ProductionOrderHandler`). Implementuje "Pull" logiku řetězce.
+**Implementace:**
 
-![SupplyChain](DiagramyUML/plantuml-output/Pattern Chain.png)
+1. **EventBus (Broker):** Centrální kanál, který spravuje registraci posluchačů (`Map<EventType, List<EventListener>>`). Na rozdíl od klasického vzoru *Mediator*, `EventBus` neobsahuje business logiku interakce, pouze směruje zprávy podle typu události.
+2. **Subscriber (Observer):** Rozhraní `EventListener` s metodou `handleEvent(Event e)`. Implementují jej třídy, které chtějí reagovat na změny (např. `EventLogger`, `MaintenanceRole`, `ManagementRole`).
+3. **Publisher (Subject):** Entity jako `Device` nebo `Employee` publikují změny stavu voláním `eventBus.publish()`.
 
-<div style="page-break-after: always;"></div>
+**Příklad z kódu:** Když `Device` detekuje opotřebení (`ActiveState`), publikuje událost `DEVICE_BREAKDOWN`.
 
-### 9\. Template Method
+- `EventLogger` (Observer 1) událost zapíše do souboru.
+- `MaintenanceRole` (Observer 2) událost zachytí a přidá zařízení do fronty oprav.
+- Samotné zařízení přitom neví, že existuje nějaký Logger nebo Údržbář.
+
+![State sequence diagram](DiagramyUML/plantuml-output/Pattern Observer Bus.png)
+
+
+
+---
+
+#### 8. Composite
+
+<div style="float: right; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Composite.png"> </div>
+
+**Účel:** Umožňuje klientům přistupovat k jednotlivým objektům a jejich kompozicím (skupinám) jednotným způsobem. Vytváří stromovou strukturu „část-celek“ (Part-Whole).
+
+**Použití:** V projektu tento vzor řeší hierarchii balení a skladování produktů (`Item`). Skladník nebo přepravce (klientský kód) nemusí rozlišovat, zda manipuluje s jednou rybou, krabicí plnou ryb, nebo paletou plnou krabic. Třída `PackageContainer` (krabice, paleta) může obsahovat jiné `Item` (ryby nebo další krabice). Metody jako `recordTemperature()` se rekurzivně volají na celý obsah.
+
+**Implementace:**
+
+1. **Component (`Item`):** Abstraktní třída definující společné rozhraní, například `recordTemperature(double temp)` nebo `getTotalWeight()`.
+2. **Leaf (`Seafood`, `FinishedProduct`):** Konkrétní produkty (listy stromu), které nemají podřízené prvky. Metody vracejí konkrétní hodnoty (např. vlastní váhu).
+3. **Composite (`PackageContainer`):** Představuje kontejnery (krabice, palety). Obsahuje seznam `List<Item> contents`.
+   - **Rekurzivní logika:** Metody kontejneru delegují práci na své potomky.
+   - Příklad `getTotalWeight()`: Vrací součet vlastní váhy obalu (tára) + součet vah všech vnořených položek.
+   - Příklad `recordTemperature()`: Zaznamená teplotu pro sebe a následně ji propaguje na všechny položky uvnitř (pokud zmrzne paleta, zmrznou i ryby uvnitř).
+
+Tento přístup radikálně zjednodušuje kód pro manipulaci se zásobami (`Party`), protože operace nad celým stromem objektů se volají stejně jednoduše jako nad jediným objektem.
+
+<div style="clear: both;"></div>
+
+---
+
+#### 9. Template Method
 
 <div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Template.png"> </div>
 
-**Účel:** Definuje kostru algoritmu v operaci a některé kroky přenechává podtřídám.
-**Použití:** Generování reportů (`ReportTemplate`). Metoda `generate()` definuje pevnou strukturu (hlavička → obsah → patička → uložení), zatímco podtřídy (`FoodChainReport`, `SecurityReport`) implementují pouze specifické formátování obsahu.
+**Účel:**  Definuje kostru algoritmu v operaci a některé kroky přenechává podtřídám. Umožňuje podtřídám redefinovat určité kroky algoritmu bez změny jeho struktury.
+
+**Použití:** V projektu zajišťuje jednotný proces generování výstupních reportů. Garantuje, že každý report bude mít správnou hlavičku, časové razítko a bude korektně uložen na disk, přičemž samotný obsah reportu se liší dle jeho typu.
+
+Generování reportů (`ReportTemplate`). Metoda `generate()` definuje pevnou strukturu (hlavička → obsah → patička → uložení), zatímco podtřídy (`FoodChainReport`, `SecurityReport`) implementují pouze specifické formátování obsahu.
+
+**Implementace:**
+
+1. **Abstraktní třída (`ReportTemplate`):**
+   - Obsahuje metodu `generate(List<Event> history)`, která je označena klíčovým slovem **`final`**. To je kritické, protože to zabraňuje podtřídám změnit sled kroků (Hlavička -> Obsah -> Patička -> Uložení).
+   - Definuje abstraktní (hook) metodu `formatContent()`, kterou musí potomci implementovat.
+2. **Konkrétní třídy (`SecurityReport`, `FoodChainReport`, `TransactionReport`):**
+   - Implementují pouze logiku formátování specifických dat.
+   - Příklad: `SecurityReport` filtruje z historie pouze události `BLOCKCHAIN_TAMPERING_DETECTED`, zatímco `FoodChainReport` vypisuje pohyby zboží.
+
+Vzor dodržuje "Hollywood Principle" (Don't call us, we'll call you) – rodičovská třída řídí tok a volá metody potomků v přesně určený okamžik.
 
 <div style="clear: both;"></div>
 
-### 10\. Memento
+---
 
-<div style="float: right; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern Memento.png"> </div>
+#### 10. Prototyp 
 
-**Účel:** Umožňuje zachytit a externalizovat vnitřní stav objektu, aby mohl být později obnoven.
-**Použití:** Třída `SimulationMemento` (implementována jako `record`) ukládá snapshot celého světa simulace v konkrétním taktu. `Caretaker` spravuje historii pro funkci "Time Travel" (rekonstrukce stavu).
+<div style="float: right; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern Prototype.png"> </div>
+
+**Účel:** Umožňuje vytváření kopií objektů bez závislosti na jejich konkrétních třídách. V kontextu projektu je klíčový pro **Deep Copy** (hlubokou kopii) složitých objektů.
+
+**Použití:** Vzor je nezbytný pro správnou funkčnost vzoru **Memento**. Abychom mohli uložit historický stav firmy (`Party`), musíme vytvořit její přesnou kopii. Pokud bychom použili pouze referenci (Shallow Copy), změny v aktuálním čase by přepsaly i uloženou historii, což by znehodnotilo snapshoty.
 
 <div style="clear: both;"></div>
+
+**Implementace:**
+
+1. **Rozhraní `Cloneable`:** Třídy `Party` a `Item` implementují toto standardní Java rozhraní.
+2. **Metoda `clone()`:**
+   - **`Party`:** Nevytváří jen novou instanci `Party`, ale prochází svůj `inventory` (sklad) a pro každou položku volá její vlastní metodu `clone()`. Tím vzniká zcela nezávislý seznam zboží.
+   - **`Item`:** Vytváří kopii sebe sama, aby se oddělil stav (např. váha, kvalita) v historii od současnosti.
+
+Díky tomuto vzoru může `Caretaker` (správce historie) kdykoliv požádat: *"Vytvoř mi otisk aktuálního stavu"* a objekt `Party` se sám bezpečně zduplikuje.
 
 <div style="page-break-after: always;"></div>
 
-### 11\. Monad (Functional Pattern)
+---
 
-<div style="float: left; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Monad.png"> </div>
+#### 11. Memento
 
-**Účel:** Řetězení operací s automatickým zpracováním vedlejších efektů a chyb (Railway Oriented Programming).
-**Použití:** Třída `CookingProcess<T>`. Používá se v receptech (`Recipe`) pro definici výrobního postupu. Pokud jakýkoliv krok selže (např. chybí surovina), zbytek řetězce se přeskočí a vrátí se chybový stav, což eliminuje složité vnořené podmínky `if-else`.
+<div style="float: left; margin: 10px 20px 20px 35px;"> <img src="DiagramyUML/plantuml-output/Pattern Memento.png"> </div>
+
+**Účel:** Umožňuje zachytit a externalizovat vnitřní stav objektu, aby mohl být později obnoven, aniž by došlo k porušení zapouzdření.
+
+**Použití:** V projektu slouží primárně k mechanismu **Emergency Rollback**. Pokud auditní systém (IoT sensory nebo Blockchain) detekuje narušení integrity - například **Double Spending** (pokus o dvojí prodej stejné šarže) - simulace se automaticky vrátí k poslednímu validnímu kontrolnímu bodu (checkpointu).
 
 <div style="clear: both;"></div>
+
+**Implementace:**
+
+1. **Originator (`SimulationController`):** Objekt, který řídí běh světa. Pravidelně (např. každých 24 ticků) vytváří snímek stavu. Pro zajištění věrnosti minulosti vytváří **hlubokou kopii (Deep Copy)** všech entit a jejich inventářů pomocí vzoru **Prototype**.
+2. **Memento (`SimulationMemento`):** Imutabilní záznam (Java Record), který uchovává zmrazený seznam naklonovaných entit, aktuální tick a časové razítko.
+3. **Caretaker (`HistoryManager`):** Spravuje historii mement na zásobníku (Stack). Zajišťuje, že se můžeme vrátit o několik kroků zpět, pokud je detekováno více po sobě jdoucích incidentů.
+
+**Klíčový přínos pro audit:** Zatímco stav entit a čas v simulátoru se po obnově vrátí do minulosti, **EventLogger** a **Blockchain** zůstávají netknuté. To znamená, že v konečném reportu je vidět jak pokus o podvod (`MaliciousActor`), tak i následná úspěšná obnova systému, což prokazuje vysokou odolnost celého dodavatelského řetězce.
+
+---
+
+<div style="page-break-after: always;"></div>
+
+#### 12. Monad (Functional Pattern)
+
+<div style="float: right; margin: 10px 35px 20px 20px;"> <img src="DiagramyUML/plantuml-output/Pattern Monad.png"> </div>
+
+**Účel:** Řetězení operací s automatickým zpracováním vedlejších efektů, stavů a chyb (tzv. **Railway Oriented Programming**). Umožňuje bezpečně skládat funkce bez nutnosti manuálního ošetřování chyb v každém kroku.
+
+**Použití:** Třída `CookingProcess<T>`. Tento vzor se používá v receptech (`Recipe`) k definici výrobního postupu jako série transformací. Pokud jakýkoliv krok selže (např. chybí surovina, porucha stroje), zbytek řetězce se přeskočí. Tím se eliminuje tzv. "Pyramid of Doom" (hluboce vnořené podmínky `if-else`). Na rozdíl od Builderu, kde pořadí metod není důležité - jedná se o strukturu jednoho objektu, zde Monada musí dodržovat pořadí, výstup z jedné funkcí je vstupem druhé, a na pořadí zaleží. Dále, a to je ještě důležitější, - nevytvoří například sushi bez ryby. Takže nám třída `CookingProcess<T>` dovoluje flexibilně navrhovat recepty do kuchyně.
+
+<div style="clear: both;"></div>
+
+**Implementace:**
+
+1. **Context Wrapper:** `CookingProcess` zapouzdřuje surovinu a aktuální stav operace.
+2. **Bind / FlatMap:** Metoda (např. `thenProcess()`), která přijímá funkci definující další krok zpracování.
+3. **Failure Handling:** Interní logika, která při detekci chyby (Exception nebo prázdný stav) okamžitě vrací "Error context", čímž efektivně zastavuje další výpočty v daném řetězci.
+
+
+
+---
+
+##### Teoretické myšlenky o monadě :)
 
 Obecně, *monáda* je návrhový vzor, který využívá pojmy z teorie množin a teorie kategorií v matematice, přičemž vychází zejména z konceptu *monoidu*. Monoid je množina, která je uzavřená vzhledem k binární asociativní operaci a obsahuje neutrální prvek. To znamená:
 
@@ -331,18 +555,16 @@ Monáda využívá generický typ (`<T>`), aby vyhovovala definici Endofunktoru 
 
 <div style="page-break-after: always;"></div>
 
-# Slovník pojmů a slovové zkratky
+## Slovník pojmů a slovové zkratky
 
 - SCM — Supply chain management.
 - *Bod rozpojení* (anglicky *decoupling point* nebo *customer order decoupling point*) — klíčový pojem v logistice a řízení výroby. Označuje místo v logistickém řetězci, kde materiálový tok začne být určen pro konkrétního zákazníka a jeho objednávku. Jinými slovy — místo, kam až dosahuje poptávka konkrétního zákazníka, před toto místo se vyrábí "na sklad". Používá se při řízen zásob. Zákazníci jsou různé a mohou se nacházet podél celého LŘ, a tak i jim příslušné body rozpojení.
 - Monad — is a monoid in the category of endofunctors [12]. 
 
-# Reference
+## Reference
 
 1. Nástroj pro tvorby UML, UMLET, URL: https://umlet.com/
 2. Nástroj pro psaní v markdown a export do PDF: Typora, v. 1.9, URL: https://typora.io/releases/stable.html
-3. Uživatelské příběhy, například: https://www.productplan.com/glossary/user-story
-4. OOP staré školy, CS 302, Spring 2008, URL: https://pages.cs.wisc.edu/~hasti/cs302/examples/
 5. Monada:
    1. No Nonsense Monad & Functor - The foundation of Functional Programming by César Tron-Lozai, 
       URL: https://www.youtube.com/watch?v=e6tWJD5q8uw

@@ -1,0 +1,63 @@
+@startuml SmartEnums sequential
+title Sequence Diagram: LaborRoleType Lookup Logic
+autonumber
+
+participant "SeafoodEntityFactory" as Client
+participant "LaborRoleType\n(Static Context)" as Static <<Enum Class>>
+participant "MANUAL_LABOR\n(Instance)" as Role1 <<Enum Constant>>
+participant "MAINTENANCE\n(Instance)" as Role2 <<Enum Constant>>
+
+== Call from Factory ==
+Client -> Static: fromYamlString("Repair Technician")
+activate Static
+
+== 1. Input Normalization ==
+note right of Static
+  "Repair Technician"
+  -> upperCase
+  -> remove spaces
+  -> "REPAIRTECHNICIAN"
+end note
+Static -> Static: normalize input string
+
+== 2. Stream & Filter (Iteration) ==
+note right of Static
+  Arrays.stream(values()).filter(...)
+end note
+
+group Loop: Check each Enum Constant
+    
+    ' --- Iteration 1: Check MANUAL_LABOR (Fail) ---
+    Static -> Role1: matches("REPAIRTECHNICIAN")
+    activate Role1
+        Role1 -> Role1: stream aliases ["COOK", "WORKER"...]
+        Role1 -> Role1: normalize aliases
+        Role1 -> Role1: compare("COOK", "REPAIRTECHNICIAN") -> false
+    Role1 --> Static: false
+    deactivate Role1
+
+    ' --- Iteration 2: Check MAINTENANCE (Success) ---
+    Static -> Role2: matches("REPAIRTECHNICIAN")
+    activate Role2
+        Role2 -> Role2: stream aliases ["REPAIR_TECHNICIAN"...]
+        note right of Role2
+           Internal alias "REPAIR_TECHNICIAN"
+           becomes "REPAIRTECHNICIAN"
+        end note
+        Role2 -> Role2: normalize aliases
+        Role2 -> Role2: compare("REPAIRTECHNICIAN", "REPAIRTECHNICIAN") -> true
+    Role2 --> Static: true
+    deactivate Role2
+    
+    note right of Static
+       .findFirst() stops the stream
+       as soon as true is returned
+    end note
+
+end
+
+== Return Result ==
+Static --> Client: Optional.of(LaborRoleType.MAINTENANCE)
+deactivate Static
+
+@enduml

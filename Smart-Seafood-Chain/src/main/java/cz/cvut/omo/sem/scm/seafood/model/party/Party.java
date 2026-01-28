@@ -3,14 +3,18 @@ package cz.cvut.omo.sem.scm.seafood.model.party;
 import cz.cvut.omo.sem.scm.seafood.blockchain.Blockchain;
 import cz.cvut.omo.sem.scm.seafood.event.EventBus;
 import cz.cvut.omo.sem.scm.seafood.model.SimulationEntity;
+import cz.cvut.omo.sem.scm.seafood.model.device.Device;
+import cz.cvut.omo.sem.scm.seafood.model.employee.Employee;
 import cz.cvut.omo.sem.scm.seafood.model.item.Item;
 import cz.cvut.omo.sem.scm.seafood.model.item.Material;
 import cz.cvut.omo.sem.scm.seafood.model.party.role.BusinessRole;
 import cz.cvut.omo.sem.scm.seafood.pattern.chain.OrderHandler;
+import cz.cvut.omo.sem.scm.seafood.pattern.prototype.Prototype;
 import cz.cvut.omo.sem.scm.seafood.pattern.visitor.EntityVisitor;
 import cz.cvut.omo.sem.scm.seafood.pattern.visitor.Visitable;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.domain.MaterialType;
+import cz.cvut.omo.sem.scm.seafood.type.resource.Currency;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,11 +27,16 @@ import java.util.List;
  */
 @Getter
 @Setter
-public class Party extends SimulationEntity implements Visitable, Cloneable {
+public class Party extends SimulationEntity implements Visitable, Prototype<Party> {
     private Money balance;
+    private Currency currency = Currency.USD; // Default value
     private String type; // e.g. "Fisher", "Processor" - populated from config
     private List<Item> inventory = new ArrayList<>();
     private List<BusinessRole> roles = new ArrayList<>();
+
+    // lists for Inspectors and Visitors
+    private List<Device> devices = new ArrayList<>();
+    private List<Employee> employees = new ArrayList<>();
 
     private Blockchain blockchain;
     private EventBus eventBus;
@@ -39,10 +48,7 @@ public class Party extends SimulationEntity implements Visitable, Cloneable {
         super(id, name);
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
+    // safe getter
     public String getType() {
         return this.type != null ? this.type : "";
     }

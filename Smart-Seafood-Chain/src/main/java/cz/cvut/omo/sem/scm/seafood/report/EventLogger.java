@@ -17,7 +17,8 @@ import java.util.stream.Collectors;
 public class EventLogger implements EventListener {
 
     // Thread-safe list wrapper.
-    // We use ArrayList backed by synchronizedList for basic atomic operations (add, get).
+    // We use ArrayList backed by synchronizedList for basic atomic operations (add,
+    // get).
     private final List<Event> history = Collections.synchronizedList(new ArrayList<>());
 
     @Override
@@ -54,8 +55,13 @@ public class EventLogger implements EventListener {
     }
 
     private void logToConsole(Event event) {
+        // Truncate timestamp for cleaner console output
+        String timeStr = event.timestamp().toString();
+        if (timeStr.length() > 23) {
+            timeStr = timeStr.substring(0, 23); // Cut off extra nanoseconds
+        }
         System.out.printf("[LOG][%s] %s -> %s: %s%n",
-                event.timestamp(),
+                timeStr,
                 event.sourceId(),
                 event.type(),
                 event.description());

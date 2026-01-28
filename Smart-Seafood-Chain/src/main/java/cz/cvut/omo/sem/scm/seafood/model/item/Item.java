@@ -3,6 +3,7 @@ package cz.cvut.omo.sem.scm.seafood.model.item;
 import cz.cvut.omo.sem.scm.seafood.blockchain.Blockchain;
 import cz.cvut.omo.sem.scm.seafood.blockchain.Transaction;
 import cz.cvut.omo.sem.scm.seafood.model.geo.SeaRegion;
+import cz.cvut.omo.sem.scm.seafood.pattern.prototype.Prototype;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.item.CaughtState;
 import cz.cvut.omo.sem.scm.seafood.pattern.state.item.ItemLifecycleState;
 import cz.cvut.omo.sem.scm.seafood.type.operation.StorageTemperature;
@@ -21,7 +22,7 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(of = "itemId")
-public abstract class Item implements Cloneable {
+public abstract class Item implements Prototype<Item> {
 
     private String itemId;
     private String name;
@@ -33,7 +34,7 @@ public abstract class Item implements Cloneable {
     private double qualityLevel = 100.0;
     private double weightKg = 0.0;
 
-    // --- STATE PATTERN INTEGRATION (FRQ17) ---
+    // --- STATE PATTERN ---
     // Initial state is CaughtState
     private ItemLifecycleState lifecycleState = new CaughtState();
 

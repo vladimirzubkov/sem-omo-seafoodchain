@@ -1,0 +1,38 @@
+@startuml Pattern Observer Bus
+autonumber
+title Pattern: Event Bus (Pub-Sub)
+
+box "Module A (Publisher)" #LightBlue
+    participant "Generator" as Pub
+end box
+
+box "Infrastructure" #LightYellow
+    participant "EventBus\n(Map<Type, List>)" as Bus
+end box
+
+box "Module B (Subscriber)" #LightGreen
+    participant "Listener" as Sub
+end box
+
+== 1. Subscribe (Binding) ==
+Sub -> Bus: subscribe(EventType.FIRE, this)
+note right: Listener registers\nfor topic "FIRE"
+
+== ... Time passes ... ==
+
+== 2. Publish (Fire & Forget) ==
+Pub -> Bus: publish(new Event(FIRE))
+activate Bus
+    
+    note right of Bus
+        Bus looks up listeners
+        for key <b>EventType.FIRE</b>
+    end note
+
+    Bus -> Sub: handleEvent(event)
+    activate Sub
+    Sub --> Bus
+    deactivate Sub
+
+deactivate Bus
+@enduml

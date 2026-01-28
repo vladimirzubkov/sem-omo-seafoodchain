@@ -1,0 +1,46 @@
+@startuml Pattern State state
+title Device Lifecycle State Machine
+hide empty description
+
+' States
+state "ActiveState" as Active {
+  Active : onTick() -> Consume Energy
+  Active : onTick() -> Update Sensors
+  Active : onTick() -> Wear++
+}
+
+state "BrokenState" as Broken {
+  Broken : onTick() -> Do nothing
+  Broken : Entry / fireEvent(BREAKDOWN)
+}
+
+state "RepairingState" as Repair {
+  Repair : onTick() -> repairTime--
+}
+
+' Transitions
+[*] --> Active
+
+Active --> Active : Normal Operation
+
+Active --> Broken : Wear >= 1.0\nor Sensor Anomaly
+note on link
+  Self-initiated transition
+  (Automatic)
+end note
+
+Broken --> Repair : onRepair(device)\n[Called by Technician]
+note on link
+  External transition
+  (Manual intervention)
+end note
+
+Repair --> Repair : Repairing...
+
+Repair --> Active : repairTime <= 0
+note on link
+  Reset Wear to 0.0
+  Resume Operation
+end note
+
+@enduml

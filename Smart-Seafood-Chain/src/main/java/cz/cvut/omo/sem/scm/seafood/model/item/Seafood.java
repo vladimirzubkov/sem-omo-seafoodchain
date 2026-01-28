@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 public class Seafood extends Item {
     private SeafoodType seafoodType;
     private boolean isLive;
+    private boolean fromImport;
 
     public Seafood(String id, SeafoodType seafoodType, double weightKg, boolean isLive) {
         this.setItemId(id);
@@ -16,5 +17,6 @@ public class Seafood extends Item {
         this.setWeightKg(weightKg);
         this.isLive = isLive;
         this.setName(seafoodType.name());
+        this.fromImport = false;
     }
 }

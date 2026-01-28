@@ -1,6 +1,6 @@
 # src/main/resources/prague-sushi-luxury.yaml
 simulation:
-  maxTicks: 72
+  maxTicks: 72   # three days operation
 
 company:
   name: "Prague Sushi Luxury s.r.o."
@@ -16,16 +16,12 @@ parties:
     id: importer-tuna
     name: "Pacific Tuna Import"
     balance: "1500000 CZK"
+    importPeriodHours: 48  # Custom import frequency (e.g., every 2 days)
 
   - type: Processor
     id: proc-prague-lux
     name: "Luxury Fish Prep Prague"
     balance: "800000 CZK"
-
-  - type: Kitchen
-    id: kitchen-downtown
-    name: "Downtown Sushi Kitchen"
-    balance: "600000 CZK"
 
   - type: Kitchen
     id: kitchen-downtown
@@ -73,23 +69,29 @@ parties:
     name: "Lux Inspector Klara"
 
 devices:
-  - type: SuperFreezer
+  - type: IndustrialFreezer
     id: super-freeze
     energyPerHour: 8.0
     maintenanceCost: "15000 CZK"
+    # Optional: storageMode: "FROZEN" (default)
 
-  - type: PrecisionRobot
+  - type: FoodProcessingRobot
     id: prec-robot
     energyPerHour: 5.5
     maintenanceCost: "20000 CZK"
+    capabilities:
+      - "FILLETING"
+      - "CHOPPING"
 
 productionLines:
   - name: "Nigiri & Sashimi Line"
+    ownerId: "proc-prague-lux"
     devices: ["prec-robot", "super-freeze"]
     cooks: ["master-chef"]
     technicians: ["tech-prague"]
 
   - name: "Maki Roll Line"
+    ownerId: "proc-prague-lux"
     devices: ["prec-robot"]
     cooks: ["master-chef"]
     technicians: ["tech-prague"]

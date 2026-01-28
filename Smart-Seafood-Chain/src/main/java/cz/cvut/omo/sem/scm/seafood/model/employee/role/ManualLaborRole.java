@@ -1,30 +1,47 @@
 package cz.cvut.omo.sem.scm.seafood.model.employee.role;
 
+import cz.cvut.omo.sem.scm.seafood.event.Event;
 import cz.cvut.omo.sem.scm.seafood.model.employee.Employee;
 import cz.cvut.omo.sem.scm.seafood.type.operation.EventType;
 import cz.cvut.omo.sem.scm.seafood.type.role.LaborRoleType;
 
+/**
+ * Role representing physical labor performed by an employee.
+ */
 public class ManualLaborRole implements JobRole {
+
+    private boolean isResourceAvailable = true;
 
     @Override
     public void work(Employee context) {
-        // 1. Simulate routine work
-        // Real implementation would check context.getAssignedProductionLine()
+        // Check if there are resources to work with
+        if (!isResourceAvailable) {
+            return;
+        }
 
-        // 2. Consume stamina/energy (mock logic)
-        // If we tracked energy, we would decrease it here.
+        // WORK LOGIC:
+        // We REMOVED context.reportAction() from here.
+        // The worker is still "working" (taking time/energy),
+        // but the specific production details are now handled by ProcessorRole
+        // to provide much cleaner and more detailed reports.
 
-        // 3. Occasionally report status
-        // Only report sometimes to avoid spamming the console
-        if (Math.random() < 0.05) {
-            context.reportAction(EventType.ITEM_PROCESSED,
-                    "Worker manual task completed", null);
-            System.out.println("[MANUAL LABOR] %s is processing items on the line.".formatted(context.getName()));
+        if (Math.random() < 0.10) {
+            // Physical effort happens here, but we don't spam the global log.
         }
     }
 
     @Override
     public LaborRoleType getRoleType() {
         return LaborRoleType.MANUAL_LABOR;
+    }
+
+    @Override
+    public void onEvent(Event event, Employee context) {
+        // React to global events like warehouse depletion
+        if (event.type() == EventType.RESOURCE_DEPLETED) {
+            this.isResourceAvailable = false;
+        } else if (event.type() == EventType.RESOURCE_REFILLED) {
+            this.isResourceAvailable = true;
+        }
     }
 }

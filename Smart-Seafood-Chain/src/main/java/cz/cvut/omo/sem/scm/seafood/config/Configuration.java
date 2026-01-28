@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 import java.util.ArrayList;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true) // Ignores properties present in YAML but not defined in this class, prevents crash
 @Data
 public class Configuration {
     private SimulationConfig simulation;
@@ -33,14 +33,22 @@ public class Configuration {
 
     @Data
     public static class PartyConfig {
-        private String type; // e.g., "Fisher", "Processor"
+        // --- Common Fields ---
+        private String type;        // Mapped to BusinessRoleType (Fisher, Importer, Restaurant, etc.)
         private String id;
         private String name;
-        private String balance; // String to parse currency later
-        private String fishingZone; // Optional (for Fisher)
-        private boolean acceptsDineIn; // Optional (for Kitchen)
-        private boolean supportsDelivery; // Optional
-        private boolean suppliesSupermarkets; // Optional
+        private String balance;     // Parsed into Money object
+
+        // --- Producer Specific ---
+        private List<String> fishingZones; // Mega corps can be present at various sea regions - producing space scale
+
+        // --- Importer Specific ---
+        private Integer importPeriodHours; // Optional: Override default 24h period for Importers - importing time frequency scale
+
+        // --- Consumer / Merchant Flags (Optional logic) ---
+        private boolean acceptsDineIn;       // Can be used to tweak Restaurant behavior
+        private boolean supportsDelivery;    // Can be used for Logistics logic
+        private boolean suppliesSupermarkets;// Can be used for B2B contracts
     }
 
     @Data
@@ -49,11 +57,17 @@ public class Configuration {
         private String id;
         private double energyPerHour;
         private String maintenanceCost;
+
+        // --- when we use strict typing for devices, we may consider using additional properties from config file
+        private List<String> capabilities; // For FoodProcessingRobot
+        private String storageMode;        // For IndustrialFreezer
+        private Integer speed;             // For PackagingMachine / Conveyor
     }
 
     @Data
     public static class ProductionLineConfig {
         private String name;
+        private String ownerId;
         private List<String> devices;
         private List<String> cooks;
         private List<String> technicians;

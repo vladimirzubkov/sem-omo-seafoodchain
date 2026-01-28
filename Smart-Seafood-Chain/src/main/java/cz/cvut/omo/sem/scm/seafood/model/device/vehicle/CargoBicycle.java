@@ -3,6 +3,7 @@ package cz.cvut.omo.sem.scm.seafood.model.device.vehicle;
 import cz.cvut.omo.sem.scm.seafood.model.device.vehicle.component.ManualPower;
 import cz.cvut.omo.sem.scm.seafood.resource.Money;
 import cz.cvut.omo.sem.scm.seafood.type.device.SensorType;
+import cz.cvut.omo.sem.scm.seafood.type.device.VehicleCategory;
 
 public class CargoBicycle extends Vehicle {
 
@@ -16,5 +17,10 @@ public class CargoBicycle extends Vehicle {
     protected double getBaseValueForSensor(SensorType type) {
         // Cargo bikes usually don't have active sensors like Fridges or Vibrating motors
         return 0.0;
+    }
+
+    @Override
+    public VehicleCategory getCategory() {
+        return VehicleCategory.MANUAL_POWER;
     }
 }

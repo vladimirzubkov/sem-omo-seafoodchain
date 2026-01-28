@@ -4,7 +4,7 @@ import lombok.*;
 
 /**
  * Base class for all active entities in the simulation.
- * Fixes: Allows Simulator to treat Parties, Employees, and Machines uniformly.
+ * Fixes: Allows SimulationController to treat Parties, Employees, and Machines uniformly.
  */
 @Getter
 @Setter
@@ -20,6 +20,6 @@ public abstract class SimulationEntity {
     }
 
     // The main heartbeat method.
-    // Simulator calls this, and the entity decides what to do based on its Roles/State.
+    // SimulationController calls this, and the entity decides what to do based on its Roles/State.
     public abstract void handleTick();
 }

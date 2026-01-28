@@ -1,64 +1,75 @@
 package cz.cvut.omo.sem.scm.seafood.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.databind.ObjectMapper; // maps the file data to the Configuration class structure.
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory; // parsing backend that allows Jackson to understand YAML file format.
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 public class YamlConfigLoader {
 
     private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
-    /**
-     * Loads config from resources.
-     * If file missing or null → returns built-in minimal config (3 ticks).
-     */
     public static Configuration load(String configFileName) {
+        // 1. Check if filename is provided
         if (configFileName == null || configFileName.isBlank()) {
-            System.out.println("""
-                    No config file provided – using built-in minimal configuration (3 ticks).
-                    
-                    Available simulation configs in src/main/resources:
-                      • scm-test.yaml            → 5 ticks - 5 hours
-                      • nordic-fresh.yaml        → Norwegian premium fresh chain, 1 week
-                      • baltic-frozen.yaml       → Baltic high-volume frozen, 2 weeks watch
-                      • prague-sushi-luxury.yaml → Prague luxury sushi restaurant, 3 days cycle
-                      • russian-sea-dominator.yaml → Russian sea monopoly, 30 days watch
-                    
-                    Run with config:
-                      java -jar target/smart-seafood-chain.jar <config-name>.yaml
-                    """);
+            printHelp();
             return createFallbackConfig();
         }
 
-        try (InputStream is = YamlConfigLoader.class.getClassLoader()
-                .getResourceAsStream(configFileName)) {
+        // 2. Try to obtain the stream (Logic separated to keep try-catch clean)
+        InputStream is = getInputStream(configFileName);
 
-            if (is == null) {
-                System.out.printf("""
-                    Config file '%s' not found – using built-in minimal configuration (3 ticks).
-                    
-                    Available configs: tiny.yaml, quick-test.yaml, nordic-fresh.yaml,
-                    baltic-frozen.yaml, prague-sushi-luxury.yaml, russian-sea-dominator.yaml
-                    
-                    Example: java -jar target/seafood.jar russian-sea-dominator.yaml
-                    %n""", configFileName);
-                return createFallbackConfig();
-            }
+        if (is == null) {
+            System.out.printf("Config '%s' not found (checked classpath and disk). Using minimal fallback.%n", configFileName);
+            return createFallbackConfig();
+        }
 
+        // 3. Process the stream with auto-close (try-with-resources)
+        try (is) {
+            System.out.println("Reading configuration from: " + configFileName);
             return mapper.readValue(is, Configuration.class);
-
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load configuration: %s".formatted(configFileName), e);
+            throw new RuntimeException("Failed to parse configuration: %s".formatted(configFileName), e);
         }
     }
 
-    // Fallback config when nothing is provided
+    /**
+     * Helper strategy: try Classpath first, then Disk.
+     */
+    private static InputStream getInputStream(String fileName) {
+        // A. Try Classpath (Resources)
+        InputStream stream = YamlConfigLoader.class.getClassLoader().getResourceAsStream(fileName);
+        if (stream != null) {
+            return stream;
+        }
+
+        // B. Try Disk (External file)
+        try {
+            return new FileInputStream(fileName);
+        } catch (FileNotFoundException e) {
+            return null; // Both failed
+        }
+    }
+
     private static Configuration createFallbackConfig() {
         Configuration config = new Configuration();
         SimulationConfig sim = new SimulationConfig();
         sim.setMaxTicks(3);
         config.setSimulation(sim);
         return config;
+    }
+
+    private static void printHelp() {
+        System.out.println("""
+                No config file provided – using built-in minimal configuration (3 ticks).
+                Available simulation configs in src/main/resources:
+                  • scm-test.yaml
+                  • nordic-fresh.yaml
+                  • baltic-frozen.yaml
+                  • prague-sushi-luxury.yaml
+                  • russian-sea-dominator.yaml
+                """);
     }
 }
