@@ -1,0 +1,11 @@
+.idea/
+*.iml
+*.class
+Smart-Seafood-Chain/target/
+Smart-Seafood-Chain/reports/
+*.log
+.vscode/
+vyber/
+zadani/
+draft/
+OMO sem notes.txt
