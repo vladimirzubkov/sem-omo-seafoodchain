@@ -19,7 +19,8 @@ parties:
     id: fisher-01
     name: "Quick Fisher"
     balance: "100000 CZK"
-    fishingZone: "North Sea"
+    fishingZones:
+      - "North Sea"
 
   - type: Processor
     id: proc-01
